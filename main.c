@@ -32,28 +32,30 @@ struct in_addr *csa;
 
 //Config Params [CentralServer]
 char 		csip[16];	// ipv4 string max size
-unsigned int 	cspt=DV_cspt;	//port
+unsigned int 	cspt;	//port
 
-#ifdef app_reqserv
-	//nothing especific
-#elif app_service
+#ifdef app_service
 	//Default Values
 	int	DV_spt=59000;
 	//Config Params
 	unsigned int	id;
-	char		ip[16];
+	char		*ip;
 	unsigned int	upt;
 	unsigned int	tpt;
-#else
-	#error app type not defined
-	#include <Error_App_NotDef>
+#endif
+#ifndef app_reqserv
+	#ifndef app_service
+		#error app type not defined
+		#include <Error_App_NotDef>
+	#endif
 #endif
 
-void appConfg (char **arg){
+void appConfg ( int argc,char **argv){
 	//arg is a vector of string,
 	//arg last pointer must be NULL
 	int i=0;
 	char *SName=DV_csName;//CentralServer Name
+	cspt=DV_cspt;
 	#ifdef app_service
 	int argCheck = 0;
 	#endif
@@ -66,8 +68,8 @@ void appConfg (char **arg){
 		}else	if (strcmp(argv[i],"-j")==0 && argc>i){
 			i++;
 			argCheck++;
-			ip=atoi(argv[i]);
-		}else   if (strcmp(argv[i],"-u)==0 && argc>i){
+			ip=argv[i];
+		}else   if (strcmp(argv[i],"-u")==0 && argc>i){
                         i++;
 			argCheck++;
 			upt=atoi(argv[i]);
@@ -77,7 +79,7 @@ void appConfg (char **arg){
 			tpt=atoi(argv[i]);
                 }
 		#endif
-		iif (strcmp(argv[i],"-i")==0 && argc>i){
+		if (strcmp(argv[i],"-i")==0 && argc>i){
 			i++;
 			SName=argv[i];
 		}else	if (strcmp(argv[i],"-p")==0 && argc>i){
@@ -92,21 +94,21 @@ void appConfg (char **arg){
 	#endif
 	//get CentralServer IP
 	csh = gethostbyname(SName);
-	if (h==NULL) myerr(2,"Fail to gethostbyname");
-	csa=(struct in_addr*)h->h_addr_list[0];
+	if (csh==NULL) myerr(2,"Fail to gethostbyname");
+	csa=(struct in_addr*)csh->h_addr_list[0];
 				   
 	#ifdef debugInfo
 		#ifdef app_service
-		fprintf(stderr,"id: %d\nip: %d\nupt: %d\ntpt: %d\n",id,ip,upy,tpt);
+		fprintf(stderr,"Service:\n\tid: %d\n\tip: %s\n\tupt: %d\n\ttpt: %d\n",id,ip,upt,tpt);
 		#endif
-	fprintf(stderr,"CentralServer: %s:c%d\n",SName,cspt);
-	fprintf(stderr,"\tofficial host name: %s\n",h->h_name);
-	fprintf(stderr,"\tinternet address: %s (%08lX)\n",inet_ntoa(*a),(long unsigned int)ntohl(a->s_addr));
+	fprintf(stderr,"\nCentralServer:\n\t<%s:%d>\n",SName,cspt);
+	fprintf(stderr,"\tofficial host name: %s\n",csh->h_name);
+	fprintf(stderr,"\tinternet address: %s (%08lX)\n",inet_ntoa(*csa),(long unsigned int)ntohl(csa->s_addr));
  	#endif
 	return;
 }
 int main (int argc, char **argv) {
-	appConfig(argv);
+	appConfg(argc,argv);
 /**LAb1 code	
 //jefc
         int SPort=58000;//default value
