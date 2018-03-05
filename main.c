@@ -13,6 +13,8 @@ Made by Drarkin (jefc)
 
 #define app_service
 #define debugInfo
+#define buffersize 1024
+
 
 void myerr(int code,char* msg){
 	fprintf(stderr,"Err_%d",code);
@@ -20,6 +22,9 @@ void myerr(int code,char* msg){
 	fprintf(stderr,"\n");
 	exit(-code);
 	}
+
+char myBuffer [buffersize];
+
 //configuration of App
 
 //Geral Default Values
@@ -48,6 +53,27 @@ unsigned int 	cspt;	//port
 		#error app type not defined
 		#include <Error_App_NotDef>
 	#endif
+#endif
+
+//functions
+
+#ifdef app_service
+	void set_ds(int x){
+		stringf(mybuffer,"SET_DS %i;%i;%s;%i\n",x,id,ip,upt);
+	}
+	void withdraw(int x){
+		string(mybuffer,"WITHDRAW %i;%i\n",x,id);
+	}
+	void set_start (int x){
+		string(mybuffer,"SET_START %i;%i;%s;%i\n",x,id,ip,tcp);
+	}
+	void withdraw_start(int x){
+		string(mybuffer,"WITHDRAW_START %i;%i\n",x,id);
+	}
+	void get_Start(int x){
+		string(mybuffer,"GET_START %i;%i\n",x,id);
+	}
+
 #endif
 
 void appConfg ( int argc,char **argv){
@@ -109,71 +135,32 @@ void appConfg ( int argc,char **argv){
 }
 int main (int argc, char **argv) {
 	appConfg(argc,argv);
-/**LAb1 code	
-//jefc
-        int SPort=58000;//default value
-        char *SName="tejo";//default value
-	char msg[1025];
-	int i=0;
-	int auxi=0;
-	int Stimes=1;
-	while (argv[i]!=NULL){
-		if (strcmp(argv[i],"-m")==0 && argc>i){
-			i++;
-			auxi=strlen(argv[i]);
-			if (auxi>1024)strncpy(msg,argv[i],1024);
-			else strcpy(msg,argv[i]); 
-		}else	if (strcmp(argv[i],"-n")==0 && argc>i){
-			i++;
-			SName=argv[i];
-		}else   if (strcmp(argv[i],"-p")==0 && argc>i){
-                        i++;
-                        SPort=atoi(argv[i]);
-                }else   if (strcmp(argv[i],"-c")==0 && argc>i){
-                        i++;
-                        Stimes=atoi(argv[i]);
-                }
+	#ifdef app_service
+		//udp SC ask for SA
+			//SetUp
+			int SC_fp;
+			struct sockaddr_in SC_addr;
 
-		i++;
-	}
-	if ( auxi==0){
-		auxi=7;
-		strcmp(msg,"Hello!\n");
-	}
-//First Part
-	struct hostent *h = gethostbyname(SName);
-	struct in_addr *a;
-	if (h==NULL) myerr(1,"Fail to gethostbyname");
-	fprintf(stdout,"official host name: %s\n",h->h_name);
-	a=(struct in_addr*)h->h_addr_list[0];
-	fprintf(stdout,"internet address: %s (%08lX)\n",inet_ntoa(*a),(long unsigned int)ntohl(a->s_addr));
- 	
-//Second Part
-	int fd, n;
-	struct sockaddr_in addr;
+			SC_fp=socket(AF_INET,SOCK_DGRAM,0);//UDP socket
+			if(SC_fp==-1)myerr(2,"SocketFail Err001");//error
+			memset((void*)&SC_addr,(int)'\0',sizeof(SC_addr));
+				SC_addr.sin_family=AF_INET;
+				SC_addr.sin_addr=*csa;//MachineIP
+				SC_addr.sin_port=htons(cspt);
+			//Comunication
+		
+			/*while(0!=Stimes--){
+				n=sendto(fd,msg,auxi,0,(struct sockaddr*)&addr,sizeof(addr));
+				if(n==-1)myerr(2,"Fail to send");
+				fprintf(stdout,">Sent! (%d)\n",Stimes);*/
+			close(SC_fp);
+		//if
+			//tcp SA join Ring
+			//tcp himself join Ring (new ring)
 
-	fd=socket(AF_INET,SOCK_DGRAM,0);//UDP socket
-	if(fd==-1)myerr(2,"Fail in socket()");//error
-	memset((void*)&addr,(int)'\0',sizeof(addr));
-	addr.sin_family=AF_INET;
-	addr.sin_addr=*a;//MachineIP
-	addr.sin_port=htons(SPort);
-	while(0!=Stimes--){
-		n=sendto(fd,msg,auxi,0,(struct sockaddr*)&addr,sizeof(addr));
-		if(n==-1)myerr(2,"Fail to send");
-		fprintf(stdout,">Sent! (%d)\n",Stimes);
-	}
-//Third Part
-	int addrlen;
-	char buffer[128];
-
-	addrlen=sizeof(addr);
-	n=recvfrom(fd,buffer,128,0,(struct sockaddr*)&addr,&addrlen);
-	if(n==-1)myerr(3,"Fail to recive data");//error
-	write(1,"echo: ",6);//stdout
-	write(1,buffer,n);
-	write(1,"\n",1);
-	close(fd);
-//End Lab1Code**/
+		//if
+			//InRing
+			//Err
+	#endif
 	exit(0);
 }
