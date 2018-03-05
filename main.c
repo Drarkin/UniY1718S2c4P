@@ -47,6 +47,10 @@ unsigned int 	cspt;	//port
 	char		*ip;
 	unsigned int	upt;
 	unsigned int	tpt;
+	//socket
+	int udp_fp;
+	//SC adress
+	struct sockaddr_in SC_addr;	
 #endif
 #ifndef app_reqserv
 	#ifndef app_service
@@ -59,19 +63,27 @@ unsigned int 	cspt;	//port
 
 #ifdef app_service
 	void set_ds(int x){
-		stringf(mybuffer,"SET_DS %i;%i;%s;%i\n",x,id,ip,upt);
+		stringf(myBuffer,"SET_DS %i;%i;%s;%i\n",x,id,ip,upt);
 	}
 	void withdraw(int x){
-		string(mybuffer,"WITHDRAW %i;%i\n",x,id);
+		string(myBuffer,"WITHDRAW %i;%i\n",x,id);
 	}
 	void set_start (int x){
-		string(mybuffer,"SET_START %i;%i;%s;%i\n",x,id,ip,tcp);
+		string(myBuffer,"SET_START %i;%i;%s;%i\n",x,id,ip,tcp);
 	}
 	void withdraw_start(int x){
-		string(mybuffer,"WITHDRAW_START %i;%i\n",x,id);
+		string(myBuffer,"WITHDRAW_START %i;%i\n",x,id);
 	}
-	void get_Start(int x){
-		string(mybuffer,"GET_START %i;%i\n",x,id);
+	void get_start(int x){
+		int n;
+		string(myBuffer,"GET_START %i;%i\n",x,id);
+		n=sendto(udp_fd,mybuffer,strlen(myBuffer),0,(struct sockaddr*)&SC_addr,sizeof(SC_addr));
+		if(n==-1)myerr(2,"Fail to send");
+		n=recvfrom(udp_fd,myBuffer,buffersize,0,(struct sockaddr*)&addr,&addrlen);
+		if(n==-1)myerr(3,"Fail to recive data");//error
+		write(1,"ServerAns: ",6);//stdout
+		write(1,myBuffer,n);
+		write(1,"\n",1);
 	}
 
 #endif
@@ -138,22 +150,19 @@ int main (int argc, char **argv) {
 	#ifdef app_service
 		//udp SC ask for SA
 			//SetUp
-			int SC_fp;
-			struct sockaddr_in SC_addr;
-
-			SC_fp=socket(AF_INET,SOCK_DGRAM,0);//UDP socket
-			if(SC_fp==-1)myerr(2,"SocketFail Err001");//error
+			udp_fp=socket(AF_INET,SOCK_DGRAM,0);//UDP socket
+			if(udp_fp==-1)myerr(2,"SocketFail Err001");//error
 			memset((void*)&SC_addr,(int)'\0',sizeof(SC_addr));
 				SC_addr.sin_family=AF_INET;
 				SC_addr.sin_addr=*csa;//MachineIP
 				SC_addr.sin_port=htons(cspt);
 			//Comunication
-		
+			get_start(0);
 			/*while(0!=Stimes--){
 				n=sendto(fd,msg,auxi,0,(struct sockaddr*)&addr,sizeof(addr));
 				if(n==-1)myerr(2,"Fail to send");
 				fprintf(stdout,">Sent! (%d)\n",Stimes);*/
-			close(SC_fp);
+			close(udp_fp);
 		//if
 			//tcp SA join Ring
 			//tcp himself join Ring (new ring)
