@@ -79,6 +79,22 @@ unsigned int 	cspt;	//port
 		#endif
 		return;
 	}
+
+	int mysend(int fp, struct sockaddr_in addr){
+		int n;
+		n=sendto(fp,myBuffer,strlen(myBuffer),0,(struct sockaddr*)&addr,sizeof(addr));
+		if(n==-1)myerr(2,"Fail to send");
+			fprintf(stderr,"Sent[%i]: %s\n",fp,myBuffer);
+		return n;
+	}
+	int myrecv(int fp,struct sockaddr_in addr){
+		int n;
+		int addrlen=sizeof(addr);
+		n=recvfrom(fp,myBuffer,buffersize,0,(struct sockaddr*)&addr,&addrlen);
+		if(n==-1)myerr(3,"Fail to recive data");//error
+		fprintf(stdout,"Ans[%i]: %s\n",fp,myBuffer);
+		return n;
+	}
 #ifdef app_service
 	void set_ds(int x){
 		sprintf(myBuffer,"SET_DS %i;%i;%s;%i\n",x,id,ip,upt);
@@ -97,6 +113,7 @@ unsigned int 	cspt;	//port
 		char *mypointer[4];
 		int addrlen =(int) sizeof(SC_addr);
 		sprintf(myBuffer,"GET_START %i;%i\n",x,id);
+		/*
 		n=sendto(udp_fp,myBuffer,strlen(myBuffer),0,(struct sockaddr*)&SC_addr,sizeof(SC_addr));
 		if(n==-1)myerr(2,"Fail to send");
 			fprintf(stderr,"Sent: %s\n",myBuffer);
@@ -104,7 +121,10 @@ unsigned int 	cspt;	//port
 		if(n==-1)myerr(3,"Fail to recive data");//error
 		
 		//ProcessAnswer
-		fprintf(stdout,"ServerAns: %s\n",myBuffer);
+		fprintf(stdout,"ServerAns: %s\n",myBuffer);/**/
+		
+		mysend(udp_fp,SC_addr);
+		myrecv(udp_fp,SC_addr);
 		if (0!=sscanf(myBuffer,"OK %i;%i;%s;%i\n",&n,&Oid,Oip,Otpt) && n==id){
 			fprintf(stderr,"AnsData:\n\tid: %i\n\tip %s\n\ttpt %i\n",Oid,Oip,Otpt);
 			return 1;
