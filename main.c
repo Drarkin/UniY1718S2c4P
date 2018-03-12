@@ -74,16 +74,17 @@ unsigned int 	cspt;	//port
 	void withdraw_start(int x){
 		sprintf(myBuffer,"WITHDRAW_START %i;%i\n",x,id);
 	}
-	void get_start(int x){
+	int get_start(int x){
 		int n;
+		int addrlen =(int) sizeof(SC_addr);
 		sprintf(myBuffer,"GET_START %i;%i\n",x,id);
 		n=sendto(udp_fp,myBuffer,strlen(myBuffer),0,(struct sockaddr*)&SC_addr,sizeof(SC_addr));
 		if(n==-1)myerr(2,"Fail to send");
+			fprintf(stderr,"Sent: %s\n",myBuffer);
 		n=recvfrom(udp_fp,myBuffer,buffersize,0,(struct sockaddr*)&SC_addr,&addrlen);
 		if(n==-1)myerr(3,"Fail to recive data");//error
-		write(1,"ServerAns: ",6);//stdout
-		write(1,myBuffer,n);
-		write(1,"\n",1);
+		fprintf(stdout,"ServerAns: %s\n",myBuffer);
+		
 	}
 
 #endif
