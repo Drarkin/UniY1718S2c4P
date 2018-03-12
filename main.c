@@ -14,7 +14,7 @@ Made by Drarkin (jefc)
 #define app_service
 #define debugInfo
 #define buffersize 1024
-
+#define IPSIZE 16
 
 void myerr(int code,char* msg){
 	fprintf(stderr,"Err_%d",code);
@@ -36,7 +36,7 @@ struct hostent *csh;
 struct in_addr *csa;
 
 //Config Params [CentralServer]
-char 		csip[16];	// ipv4 string max size
+char 		csip[IPSIZE];	// ipv4 string max size
 unsigned int 	cspt;	//port
 
 #ifdef app_service
@@ -51,6 +51,10 @@ unsigned int 	cspt;	//port
 	int udp_fp;
 	//SC adress
 	struct sockaddr_in SC_addr;	
+	//Other ServiceServerInfo
+	int	Oid;
+	char	Oip[IPSIZE];
+	int	Otpt;
 #endif
 #ifndef app_reqserv
 	#ifndef app_service
@@ -76,6 +80,7 @@ unsigned int 	cspt;	//port
 	}
 	int get_start(int x){
 		int n;
+		char *mypointer[4];
 		int addrlen =(int) sizeof(SC_addr);
 		sprintf(myBuffer,"GET_START %i;%i\n",x,id);
 		n=sendto(udp_fp,myBuffer,strlen(myBuffer),0,(struct sockaddr*)&SC_addr,sizeof(SC_addr));
@@ -83,8 +88,15 @@ unsigned int 	cspt;	//port
 			fprintf(stderr,"Sent: %s\n",myBuffer);
 		n=recvfrom(udp_fp,myBuffer,buffersize,0,(struct sockaddr*)&SC_addr,&addrlen);
 		if(n==-1)myerr(3,"Fail to recive data");//error
-		fprintf(stdout,"ServerAns: %s\n",myBuffer);
 		
+		//ProcessAnswer
+		fprintf(stdout,"ServerAns: %s\n",myBuffer);
+		if (0!=sscanf(myBuffer,"OK %i;%i;%s;%i\n",&n,&Oid,Oip,Otpt) && n==id){
+			fprintf(stderr,"AnsData:\n\tid: %i\n\tip %s\n\ttpt %i\n",Oid,Oip,Otpt);
+			return 1;
+		}
+		fprintf(stderr,"Err WrongMsg\n");
+		return 0;
 	}
 
 #endif
