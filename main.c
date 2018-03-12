@@ -98,15 +98,23 @@ unsigned int 	cspt;	//port
 #ifdef app_service
 	void set_ds(int x){
 		sprintf(myBuffer,"SET_DS %i;%i;%s;%i\n",x,id,ip,upt);
+		mysend(udp_fp,SC_addr);
+		myrecv(udp_fp,SC_addr);
 	}
-	void withdraw(int x){
+	void withdraw_ds(int x){
 		sprintf(myBuffer,"WITHDRAW %i;%i\n",x,id);
+		mysend(udp_fp,SC_addr);
+		//myrecv(udp_fp,SC_addr);//o servidor Central responde?
 	}
 	void set_start (int x){
 		sprintf(myBuffer,"SET_START %i;%i;%s;%i\n",x,id,ip,tpt);//verify tpt
+		mysend(udp_fp,SC_addr);
+		myrecv(udp_fp,SC_addr);
 	}
 	void withdraw_start(int x){
 		sprintf(myBuffer,"WITHDRAW_START %i;%i\n",x,id);
+		mysend(udp_fp,SC_addr);
+		myrecv(udp_fp,SC_addr);
 	}
 	int get_start(int x){
 		int n;
@@ -221,6 +229,11 @@ int main (int argc, char **argv) {
 			
 			//Comunication
 			get_start(0);
+			set_ds(72673);
+			set_start(72673);
+			getchar();
+			withdraw_ds(72673);
+			withdraw_start(72673);
 			myfpClose();
 		//if
 			//tcp SA join Ring
