@@ -16,10 +16,14 @@ Made by Drarkin (jefc)
 #define buffersize 1024
 #define IPSIZE 16
 
+void myfpClose();
 void myerr(int code,char* msg){
 	fprintf(stderr,"Err_%d",code);
 	if (msg!=NULL) fprintf(stderr,":%s",msg);
 	fprintf(stderr,"\n");
+	#ifdef app_service
+		myfpClose();
+	#endif
 	exit(-code);
 	}
 
@@ -48,7 +52,9 @@ unsigned int 	cspt;	//port
 	unsigned int	upt;
 	unsigned int	tpt;
 	//socket
-	int udp_fp;
+	int udp_fp=-1;
+	int tcp_fp=-1;
+	struct sockaddr_in sudp,stcp;
 	//SC adress
 	struct sockaddr_in SC_addr;	
 	//Other ServiceServerInfo
@@ -65,6 +71,13 @@ unsigned int 	cspt;	//port
 
 //functions
 
+	void myfpClose(){
+		#ifdef app_service
+		if (udp_fp>=0){ close(udp_fp);udp_fp=-1;}
+		if (tcp_fp>=0){ close(tcp_fp);tcp_fp=-1;}
+		#endif
+		return;
+	}
 #ifdef app_service
 	void set_ds(int x){
 		sprintf(myBuffer,"SET_DS %i;%i;%s;%i\n",x,id,ip,upt);
@@ -98,7 +111,6 @@ unsigned int 	cspt;	//port
 		fprintf(stderr,"Err WrongMsg\n");
 		return 0;
 	}
-
 #endif
 
 void appConfg ( int argc,char **argv){
@@ -169,13 +181,15 @@ int main (int argc, char **argv) {
 				SC_addr.sin_family=AF_INET;
 				SC_addr.sin_addr=*csa;//MachineIP
 				SC_addr.sin_port=htons(cspt);
+			
+			memset((void*)&sudp,(int)'\0',sizeof(sudp));
+				sudp.sin_family=AF_INET;
+				sudp.sin_addr.s_addr=htonl(INADDR_ANY);//MachineIP
+				sudp.sin_port=htons(upt);
+			if(bind(udp_fp,(struct sockaddr*)&sudp,sizeof(struct sockaddr))==-1)myerr(3,"FAiled to bind udp");
 			//Comunication
 			get_start(0);
-			/*while(0!=Stimes--){
-				n=sendto(fd,msg,auxi,0,(struct sockaddr*)&addr,sizeof(addr));
-				if(n==-1)myerr(2,"Fail to send");
-				fprintf(stdout,">Sent! (%d)\n",Stimes);*/
-			close(udp_fp);
+			myfpClose();
 		//if
 			//tcp SA join Ring
 			//tcp himself join Ring (new ring)
