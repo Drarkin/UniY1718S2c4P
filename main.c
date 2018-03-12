@@ -63,23 +63,23 @@ unsigned int 	cspt;	//port
 
 #ifdef app_service
 	void set_ds(int x){
-		stringf(myBuffer,"SET_DS %i;%i;%s;%i\n",x,id,ip,upt);
+		sprintf(myBuffer,"SET_DS %i;%i;%s;%i\n",x,id,ip,upt);
 	}
 	void withdraw(int x){
-		string(myBuffer,"WITHDRAW %i;%i\n",x,id);
+		sprintf(myBuffer,"WITHDRAW %i;%i\n",x,id);
 	}
 	void set_start (int x){
-		string(myBuffer,"SET_START %i;%i;%s;%i\n",x,id,ip,tcp);
+		sprintf(myBuffer,"SET_START %i;%i;%s;%i\n",x,id,ip,tpt);//verify tpt
 	}
 	void withdraw_start(int x){
-		string(myBuffer,"WITHDRAW_START %i;%i\n",x,id);
+		sprintf(myBuffer,"WITHDRAW_START %i;%i\n",x,id);
 	}
 	void get_start(int x){
 		int n;
-		string(myBuffer,"GET_START %i;%i\n",x,id);
-		n=sendto(udp_fd,mybuffer,strlen(myBuffer),0,(struct sockaddr*)&SC_addr,sizeof(SC_addr));
+		sprintf(myBuffer,"GET_START %i;%i\n",x,id);
+		n=sendto(udp_fp,myBuffer,strlen(myBuffer),0,(struct sockaddr*)&SC_addr,sizeof(SC_addr));
 		if(n==-1)myerr(2,"Fail to send");
-		n=recvfrom(udp_fd,myBuffer,buffersize,0,(struct sockaddr*)&addr,&addrlen);
+		n=recvfrom(udp_fp,myBuffer,buffersize,0,(struct sockaddr*)&SC_addr,&addrlen);
 		if(n==-1)myerr(3,"Fail to recive data");//error
 		write(1,"ServerAns: ",6);//stdout
 		write(1,myBuffer,n);
