@@ -15,6 +15,7 @@ Made by Drarkin (jefc)
 #define debugInfo
 #define buffersize 1024
 #define IPSIZE 16
+#define myMaxTCP 10
 
 void myfpClose();
 void myerr(int code,char* msg){
@@ -187,6 +188,17 @@ int main (int argc, char **argv) {
 				sudp.sin_addr.s_addr=htonl(INADDR_ANY);//MachineIP
 				sudp.sin_port=htons(upt);
 			if(bind(udp_fp,(struct sockaddr*)&sudp,sizeof(struct sockaddr))==-1)myerr(3,"FAiled to bind udp");
+				
+			
+			tcp_fp=socket(AF_INET,SOCK_STREAM,0);
+			if(tcp_fp==-1)myerr(2,"SocketFail Err002");//error
+			memset((void*)&stcp,(int)'\0',sizeof(stcp));
+				stcp.sin_family=AF_INET;
+				stcp.sin_addr.s_addr=htonl(INADDR_ANY);//MachineIP
+				stcp.sin_port=htons(tpt);
+			if(bind(tcp_fp,(struct sockaddr*)&stcp,sizeof(struct sockaddr))==-1)myerr(3,"FAiled to bind tcp");
+			if(listen(tcp_fp,myMaxTCP)==-1)myerr(4,"Fail to set maxConnects");
+			
 			//Comunication
 			get_start(0);
 			myfpClose();
