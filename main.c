@@ -6,6 +6,8 @@ Made by Drarkin (jefc)
 #include <stdio.h>
 #include <netdb.h>
 #include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
@@ -16,6 +18,9 @@ Made by Drarkin (jefc)
 #define buffersize 1024
 #define IPSIZE 16
 #define myMaxTCP 10
+
+#define max(A,B) ((A)>=(B)?(A):(B))
+#define myScmp(A) (strncmp(myBuffer,A,strlen(A))==0)
 
 void myfpClose();
 void myerr(int code,char* msg){
@@ -140,6 +145,38 @@ unsigned int 	cspt;	//port
 		fprintf(stderr,"Err WrongMsg\n");
 		return 0;
 	}
+	int userIns(){
+		scanf("%s",myBuffer);
+		if (0==strcmp(myBuffer,"quit")) return 1;
+		
+		if myScmp("set_ds"){
+			fprintf(stderr,">>SET_DS!\n");
+		}
+		
+		
+		return 0;
+	}
+	void appRun(){
+		enum {idle,busy} state;
+		int fd,newfd,afd;
+		fd_set rfds;
+		int maxfd,counter;
+		fd=tcp_fp;//replace fd with tcp_fp
+		while(1){
+			if(userIns())return;
+			FD_ZERO(&rfds);
+			FD_SET(fd,&rfds);maxfd=fd;
+			//FD_SET((int)stdin,&rfds);//jefc
+			if(state==busy){FD_SET(afd,&rfds);maxfd=max(maxfd,afd);}
+			
+			counter=select(maxfd+1,&rfds,
+							(fd_set*)NULL,(fd_set*)NULL,(struct timeval *)NULL);
+			if (counter<=0)myerr(158,"Failed in appRun()");
+			
+			
+			
+		}
+	}
 #endif
 
 void appConfg ( int argc,char **argv){
@@ -203,7 +240,7 @@ int main (int argc, char **argv) {
 	appConfg(argc,argv);
 	#ifdef app_service
 		//udp SC ask for SA
-			//SetUp
+			//SetUp Sockets
 			udp_fp=socket(AF_INET,SOCK_DGRAM,0);//UDP socket
 			if(udp_fp==-1)myerr(2,"SocketFail Err001");//error
 			memset((void*)&SC_addr,(int)'\0',sizeof(SC_addr));
@@ -234,6 +271,7 @@ int main (int argc, char **argv) {
 			getchar();
 			withdraw_ds(72673);
 			withdraw_start(72673);
+			appRun();
 			myfpClose();
 		//if
 			//tcp SA join Ring
