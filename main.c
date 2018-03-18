@@ -146,6 +146,8 @@ unsigned int 	cspt;	//port
 		return 0;
 	}
 	int userIns(){
+		myBuffer[0]='\0';//Reset burffer data
+		fprintf(stderr,"in function userIns\n");
 		scanf("%s",myBuffer);
 		if (0==strcmp(myBuffer,"quit")) return 1;
 		
@@ -163,7 +165,6 @@ unsigned int 	cspt;	//port
 		int maxfd,counter;
 		fd=tcp_fp;//replace fd with tcp_fp
 		while(1){
-			if(userIns())return;
 			FD_ZERO(&rfds);
 			FD_SET(fd,&rfds);maxfd=fd;
 			//FD_SET((int)stdin,&rfds);//jefc
@@ -173,7 +174,8 @@ unsigned int 	cspt;	//port
 							(fd_set*)NULL,(fd_set*)NULL,(struct timeval *)NULL);
 			if (counter<=0)myerr(158,"Failed in appRun()");
 			
-			
+			//put code to read stdin when input is writen
+			if(userIns())return;
 			
 		}
 	}
@@ -265,12 +267,12 @@ int main (int argc, char **argv) {
 			if(listen(tcp_fp,myMaxTCP)==-1)myerr(4,"Fail to set maxConnects");
 			
 			//Comunication
-			get_start(0);
+			/*get_start(0);
 			set_ds(72673);
 			set_start(72673);
 			getchar();
 			withdraw_ds(72673);
-			withdraw_start(72673);
+			withdraw_start(72673);/**/
 			appRun();
 			myfpClose();
 		//if
