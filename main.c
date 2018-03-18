@@ -18,6 +18,7 @@ Made by Drarkin (jefc)
 #define buffersize 1024
 #define IPSIZE 16
 #define myMaxTCP 10
+#define STDIN 0
 
 #define max(A,B) ((A)>=(B)?(A):(B))
 #define myScmp(A) (strncmp(myBuffer,A,strlen(A))==0)
@@ -149,10 +150,12 @@ unsigned int 	cspt;	//port
 		myBuffer[0]='\0';//Reset burffer data
 		fprintf(stderr,"in function userIns\n");
 		scanf("%s",myBuffer);
-		if (0==strcmp(myBuffer,"quit")) return 1;
-		
-		if myScmp("set_ds"){
+		if myScmp("quit") return 1;
+		else if myScmp("set_ds"){
 			fprintf(stderr,">>SET_DS!\n");
+		}else{
+			fprintf(stdout,"Unknow Command!\n");
+			fflush(stdout);
 		}
 		
 		
@@ -164,18 +167,22 @@ unsigned int 	cspt;	//port
 		fd_set rfds;
 		int maxfd,counter;
 		fd=tcp_fp;//replace fd with tcp_fp
+		maxfd=(fd>STDIN)?fd:STDIN;
 		while(1){
 			FD_ZERO(&rfds);
-			FD_SET(fd,&rfds);maxfd=fd;
-			//FD_SET((int)stdin,&rfds);//jefc
+			FD_SET(fd,&rfds);
+			FD_SET((int )STDIN,&rfds);
+			//FD_SET((int)STDIN,&rfds);//jefc
 			if(state==busy){FD_SET(afd,&rfds);maxfd=max(maxfd,afd);}
 			
 			counter=select(maxfd+1,&rfds,
 							(fd_set*)NULL,(fd_set*)NULL,(struct timeval *)NULL);
 			if (counter<=0)myerr(158,"Failed in appRun()");
 			
-			//put code to read stdin when input is writen
-			if(userIns())return;
+			//put code to read STDIN when input is writen
+			if (FD_ISSET(STDIN,&rfds)){
+				if(userIns())return;
+			}
 			
 		}
 	}
