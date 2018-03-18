@@ -14,6 +14,7 @@ Made by Drarkin (jefc)
 #include <unistd.h>
 
 #define app_service
+
 #define debugInfo
 #define buffersize 1024
 #define IPSIZE 16
@@ -60,7 +61,7 @@ unsigned int 	cspt;	//port
 	unsigned int	tpt;
 	//socket
 	int udp_fp=-1;
-	int tcp_fp=-1;
+	int tcp_fd=-1;
 	struct sockaddr_in sudp,stcp;
 	//SC adress
 	struct sockaddr_in SC_addr;	
@@ -81,7 +82,7 @@ unsigned int 	cspt;	//port
 	void myfpClose(){
 		#ifdef app_service
 		if (udp_fp>=0){ close(udp_fp);udp_fp=-1;}
-		if (tcp_fp>=0){ close(tcp_fp);tcp_fp=-1;}
+		if (tcp_fd>=0){ close(tcp_fd);tcp_fd=-1;}
 		#endif
 		return;
 	}
@@ -147,6 +148,7 @@ unsigned int 	cspt;	//port
 		return 0;
 	}
 	int userIns(){
+		//reads user input from stdin and calls the correct function to execut user command
 		myBuffer[0]='\0';//Reset burffer data
 		fprintf(stderr,"in function userIns\n");
 		scanf("%s",myBuffer);
@@ -162,15 +164,19 @@ unsigned int 	cspt;	//port
 		return 0;
 	}
 	void appRun(){
+		//main code for service functionally
+		//wait for new information to be read from any file descriptor and executs the correct answer for that input
 		enum {idle,busy} state;
 		int fd,newfd,afd;
 		fd_set rfds;
 		int maxfd,counter;
-		fd=tcp_fp;//replace fd with tcp_fp
-		maxfd=(fd>STDIN)?fd:STDIN;
+		//Find max value
+		maxfd=(tcp_fd>STDIN)?tcp_fd:STDIN;
+		maxfd=(udp_fp>maxfd)?udp_fp:maxfd;
 		while(1){
 			FD_ZERO(&rfds);
-			FD_SET(fd,&rfds);
+			FD_SET(tcp_fd,&rfds);
+			FD_SET(udp_fp,&rfds);
 			FD_SET((int )STDIN,&rfds);
 			//FD_SET((int)STDIN,&rfds);//jefc
 			if(state==busy){FD_SET(afd,&rfds);maxfd=max(maxfd,afd);}
@@ -183,6 +189,12 @@ unsigned int 	cspt;	//port
 			if (FD_ISSET(STDIN,&rfds)){
 				if(userIns())return;
 			}
+			if (FD_ISSET(tcp_fd,&rfds)){
+			}
+			if (FD_ISSET(udp_fp,&rfds)){
+				
+			}
+			
 			
 		}
 	}
@@ -264,14 +276,14 @@ int main (int argc, char **argv) {
 			if(bind(udp_fp,(struct sockaddr*)&sudp,sizeof(struct sockaddr))==-1)myerr(3,"FAiled to bind udp");
 				
 			
-			tcp_fp=socket(AF_INET,SOCK_STREAM,0);
-			if(tcp_fp==-1)myerr(2,"SocketFail Err002");//error
+			tcp_fd=socket(AF_INET,SOCK_STREAM,0);
+			if(tcp_fd==-1)myerr(2,"SocketFail Err002");//error
 			memset((void*)&stcp,(int)'\0',sizeof(stcp));
 				stcp.sin_family=AF_INET;
 				stcp.sin_addr.s_addr=htonl(INADDR_ANY);//MachineIP
 				stcp.sin_port=htons(tpt);
-			if(bind(tcp_fp,(struct sockaddr*)&stcp,sizeof(struct sockaddr))==-1)myerr(3,"FAiled to bind tcp");
-			if(listen(tcp_fp,myMaxTCP)==-1)myerr(4,"Fail to set maxConnects");
+			if(bind(tcp_fd,(struct sockaddr*)&stcp,sizeof(struct sockaddr))==-1)myerr(3,"FAiled to bind tcp");
+			if(listen(tcp_fd,myMaxTCP)==-1)myerr(4,"Fail to set maxConnects");
 			
 			//Comunication
 			/*get_start(0);
