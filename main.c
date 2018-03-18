@@ -149,11 +149,25 @@ unsigned int 	cspt;	//port
 	}
 	int userIns(){
 		//reads user input from stdin and calls the correct function to execut user command
+		int intaux;
 		myBuffer[0]='\0';//Reset burffer data
-		fprintf(stderr,"in function userIns\n");
-		scanf("%s",myBuffer);
-		if myScmp("quit") return 1;
-		else if myScmp("set_ds"){
+		/*fprintf(stderr,"in function userIns\n");//Debug*/
+		intaux=scanf("%[^\n]",myBuffer);
+		/*prevent loopbug*/
+		/*fprintf(stderr,">>%s<<%d\n",myBuffer,intaux);//debug*/
+		if (intaux<=0) {getchar();return 0;}
+		
+		if (myScmp("quit")||myScmp("exit")) return 1;
+		else if(myScmp("join")){
+			//entrar no anel do serviço x
+			// por omissao entrar no anel disponicel
+			intaux=atoi(&myBuffer[4]);
+			fprintf(stderr,">>join with id %d\n",intaux);
+		}else if(myScmp("show_state")){
+			//print state
+		}else if (myScmp("leave")){
+			//saida do servidor do anel
+		}else if myScmp("set_ds"){
 			fprintf(stderr,">>SET_DS!\n");
 		}else{
 			fprintf(stdout,"Unknow Command!\n");
@@ -177,7 +191,7 @@ unsigned int 	cspt;	//port
 			FD_ZERO(&rfds);
 			FD_SET(tcp_fd,&rfds);
 			FD_SET(udp_fp,&rfds);
-			FD_SET((int )STDIN,&rfds);
+			FD_SET(STDIN,&rfds);
 			//FD_SET((int)STDIN,&rfds);//jefc
 			if(state==busy){FD_SET(afd,&rfds);maxfd=max(maxfd,afd);}
 			
