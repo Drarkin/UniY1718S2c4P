@@ -67,8 +67,8 @@ unsigned int 	cspt;	//port
 	struct sockaddr_in SC_addr;	
 	//Other ServiceServerInfo
 	struct app_service_state {
-		enum {s_ds,s_ds_ok,w_ds,w_ds_ok,s_s,s_s_ok,w_s,w_s_ok,g_s,g_s_ok,ready,nready,busy} state; //have func getEnum
-		enum {true,false} ds,ss;// have func getBool
+		enum {nready,s_ds,s_ds_ok,w_ds,w_ds_ok,s_s,s_s_ok,w_s,w_s_ok,g_s,g_s_ok,ready,busy} state; //have func getEnum
+		enum {false,true} ds,ss;// have func getBool
 	}AppState;
 	int ServX;
 	int	Oid;
@@ -114,9 +114,9 @@ unsigned int 	cspt;	//port
 		myrecv(udp_fp,SC_addr);
 	}
 	void withdraw_ds(int x){
-		sprintf(myBuffer,"WITHDRAW %i;%i\n",x,id);
+		sprintf(myBuffer,"WITHDRAW_DS %i;%i\n",x,id);
 		mysend(udp_fp,SC_addr);
-		//myrecv(udp_fp,SC_addr);//o servidor Central responde! Existe erro
+		myrecv(udp_fp,SC_addr);//o servidor Central responde! Existe erro
 	}
 	void set_start (int x){
 		sprintf(myBuffer,"SET_START %i;%i;%s;%i\n",x,id,ip,tpt);//verify tpt
@@ -124,15 +124,16 @@ unsigned int 	cspt;	//port
 		AppState.state=s_s;
 	}
 	void Ans_set_start(){
-
+		int n;
 		myrecv(udp_fp,SC_addr);
 		AppState.state=s_s_ok;
-		fprintf(stderr,"(udp)>>%s<<",myBuffer);
+		if (0!=sscanf(myBuffer,"OK %i;",&n) && n==id) {AppState.state=s_s_ok;AppState.ss=true;}
 	}
 	void withdraw_start(int x){
 		sprintf(myBuffer,"WITHDRAW_START %i;%i\n",x,id);
 		mysend(udp_fp,SC_addr);
 		myrecv(udp_fp,SC_addr);
+		AppState.ss=false;
 	}
 	void get_start(int x){
 		int addrlen =(int) sizeof(SC_addr);
@@ -155,7 +156,7 @@ unsigned int 	cspt;	//port
 		int n;
 		myrecv(udp_fp,SC_addr);
 		fprintf(stderr,"(udp)>>%s<<",myBuffer);
-		if (0!=sscanf(myBuffer,"OK %i;%i;%s;%i\n",&n,&Oid,Oip,Otpt) && n==id){
+		if (0!=sscanf(myBuffer,"OK %i;%i;%s;%i\n",&n,&Oid,Oip,&Otpt) && n==id){
 			fprintf(stderr,"AnsData:\n\tid: %i\n\tip %s\n\ttpt %i\n",Oid,Oip,Otpt);
 			return 1;
 		}
@@ -176,8 +177,17 @@ unsigned int 	cspt;	//port
 		/*fprintf(stderr,">>%s<<%d\n",myBuffer,intaux);//debug*/
 		if (intaux<=0) {getchar();return 0;}
 		
-		if (myScmp("quit")||myScmp("exit")) return 1;
-		else if(myScmp("join")){
+		if (myScmp("quit")||myScmp("exit")){
+			if myScmp("exit") 
+				if (!(AppState.ds || AppState.ss ))return 1;
+				else fprintf(stderr,"still conectect!\n");
+			if (AppState.ds==true){
+				withdraw_ds(ServX);
+			}
+			if (AppState.ss==true){
+				withdraw_start(ServX);
+			}
+		}else if(myScmp("join")){
 			//entrar no anel do serviço x
 			// por omissao entrar no anel disponicel
 			ServX=atoi(&myBuffer[4]);
