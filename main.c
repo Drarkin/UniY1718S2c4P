@@ -66,6 +66,11 @@ unsigned int 	cspt;	//port
 	//SC adress
 	struct sockaddr_in SC_addr;	
 	//Other ServiceServerInfo
+	struct app_service_state {
+		enum {s_ds,s_ds_ok,w_ds,w_ds_ok,s_s,s_s_ok,w_s,w_s_ok,g_s,g_s_ok,ready,nready,busy} state; //have func getEnum
+		enum {true,false} ds,ss;// have func getBool
+	}AppState;
+	int ServX;
 	int	Oid;
 	char	Oip[IPSIZE];
 	int	Otpt;
@@ -111,21 +116,25 @@ unsigned int 	cspt;	//port
 	void withdraw_ds(int x){
 		sprintf(myBuffer,"WITHDRAW %i;%i\n",x,id);
 		mysend(udp_fp,SC_addr);
-		//myrecv(udp_fp,SC_addr);//o servidor Central responde?
+		//myrecv(udp_fp,SC_addr);//o servidor Central responde! Existe erro
 	}
 	void set_start (int x){
 		sprintf(myBuffer,"SET_START %i;%i;%s;%i\n",x,id,ip,tpt);//verify tpt
 		mysend(udp_fp,SC_addr);
+		AppState.state=s_s;
+	}
+	void Ans_set_start(){
+
 		myrecv(udp_fp,SC_addr);
+		AppState.state=s_s_ok;
+		fprintf(stderr,"(udp)>>%s<<",myBuffer);
 	}
 	void withdraw_start(int x){
 		sprintf(myBuffer,"WITHDRAW_START %i;%i\n",x,id);
 		mysend(udp_fp,SC_addr);
 		myrecv(udp_fp,SC_addr);
 	}
-	int get_start(int x){
-		int n;
-		char *mypointer[4];
+	void get_start(int x){
 		int addrlen =(int) sizeof(SC_addr);
 		sprintf(myBuffer,"GET_START %i;%i\n",x,id);
 		/*
@@ -139,7 +148,13 @@ unsigned int 	cspt;	//port
 		fprintf(stdout,"ServerAns: %s\n",myBuffer);/**/
 		
 		mysend(udp_fp,SC_addr);
+		AppState.state=g_s;
+		return;
+	}
+	int Ans_get_start(){
+		int n;
 		myrecv(udp_fp,SC_addr);
+		fprintf(stderr,"(udp)>>%s<<",myBuffer);
 		if (0!=sscanf(myBuffer,"OK %i;%i;%s;%i\n",&n,&Oid,Oip,Otpt) && n==id){
 			fprintf(stderr,"AnsData:\n\tid: %i\n\tip %s\n\ttpt %i\n",Oid,Oip,Otpt);
 			return 1;
@@ -147,6 +162,10 @@ unsigned int 	cspt;	//port
 		fprintf(stderr,"Err WrongMsg\n");
 		return 0;
 	}
+	//AUX FUNV
+	
+	
+	/*********************/
 	int userIns(){
 		//reads user input from stdin and calls the correct function to execut user command
 		int intaux;
@@ -161,9 +180,11 @@ unsigned int 	cspt;	//port
 		else if(myScmp("join")){
 			//entrar no anel do serviço x
 			// por omissao entrar no anel disponicel
-			intaux=atoi(&myBuffer[4]);
-			fprintf(stderr,">>join with id %d\n",intaux);
+			ServX=atoi(&myBuffer[4]);
+			fprintf(stderr,">>join with id %d\n",ServX);
+			get_start(ServX);
 		}else if(myScmp("show_state")){
+			printf("\tServerState: %i (ss: %i  /  ds: %i)\n",AppState.state,AppState.ss,AppState.ds);
 			//print state
 		}else if (myScmp("leave")){
 			//saida do servidor do anel
@@ -206,9 +227,24 @@ unsigned int 	cspt;	//port
 			if (FD_ISSET(tcp_fd,&rfds)){
 			}
 			if (FD_ISSET(udp_fp,&rfds)){
-				
+				switch (AppState.state){
+					case g_s:
+							if (Ans_get_start())AppState.state=g_s_ok;
+							else AppState.state=nready;
+ 						break;
+					case s_s: Ans_set_start();
+						break;
+					default: break;	
+				}
 			}
-			
+			switch(AppState.state){
+				case g_s_ok:
+					if (Oid==0){
+						set_start(ServX);//para o servico X
+					}
+					break;
+				default: break;	
+			}
 			
 		}
 	}
