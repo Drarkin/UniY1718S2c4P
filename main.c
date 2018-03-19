@@ -65,10 +65,12 @@ unsigned int 	cspt;	//port
 	struct sockaddr_in sudp,stcp;
 	//SC adress
 	struct sockaddr_in SC_addr;	
+	//SC NextRingServer
+	struct sockaddr_in ring_addr;//tcp addres to comunivcate with other ring elements
 	//Other ServiceServerInfo
-	struct app_service_state {
+	struct app_service_state {//indicates the system state 
 		enum {nready,s_ds,s_ds_ok,w_ds,w_ds_ok,s_s,s_s_ok,w_s,w_s_ok,g_s,g_s_ok,ready,busy} state; //have func getEnum
-		enum {false,true} ds,ss;// have func getBool
+		enum {false,true} ds,ss,ring;// have func getBool
 	}AppState;
 	int ServX;
 	int	Oid;
@@ -138,16 +140,6 @@ unsigned int 	cspt;	//port
 	void get_start(int x){
 		int addrlen =(int) sizeof(SC_addr);
 		sprintf(myBuffer,"GET_START %i;%i\n",x,id);
-		/*
-		n=sendto(udp_fp,myBuffer,strlen(myBuffer),0,(struct sockaddr*)&SC_addr,sizeof(SC_addr));
-		if(n==-1)myerr(2,"Fail to send");
-			fprintf(stderr,"Sent: %s\n",myBuffer);
-		n=recvfrom(udp_fp,myBuffer,buffersize,0,(struct sockaddr*)&SC_addr,&addrlen);
-		if(n==-1)myerr(3,"Fail to recive data");//error
-		
-		//ProcessAnswer
-		fprintf(stdout,"ServerAns: %s\n",myBuffer);/**/
-		
 		mysend(udp_fp,SC_addr);
 		AppState.state=g_s;
 		return;
@@ -155,13 +147,16 @@ unsigned int 	cspt;	//port
 	int Ans_get_start(){
 		int n;
 		myrecv(udp_fp,SC_addr);
-		fprintf(stderr,"(udp)>>%s<<",myBuffer);
 		if (0!=sscanf(myBuffer,"OK %i;%i;%s;%i\n",&n,&Oid,Oip,&Otpt) && n==id){
 			fprintf(stderr,"AnsData:\n\tid: %i\n\tip %s\n\ttpt %i\n",Oid,Oip,Otpt);
 			return 1;
 		}
 		fprintf(stderr,"Err WrongMsg\n");
 		return 0;
+	}
+	void serv_start(){
+		fprintf(stderr,">>Start Exists [%d@%s:%d]\n",Oid,Oip,Otpt);
+		
 	}
 	//AUX FUNV
 	
@@ -211,7 +206,7 @@ unsigned int 	cspt;	//port
 	void appRun(){
 		//main code for service functionally
 		//wait for new information to be read from any file descriptor and executs the correct answer for that input
-		enum {idle,busy} state;
+		enum {idle,busy} state;//state that controls select
 		int fd,newfd,afd;
 		fd_set rfds;
 		int maxfd,counter;
@@ -227,7 +222,7 @@ unsigned int 	cspt;	//port
 			if(state==busy){FD_SET(afd,&rfds);maxfd=max(maxfd,afd);}
 			
 			counter=select(maxfd+1,&rfds,
-							(fd_set*)NULL,(fd_set*)NULL,(struct timeval *)NULL);
+							(fd_set*)NULL,(fd_set*)NULL,(struct timeval *)NULL);				
 			if (counter<=0)myerr(158,"Failed in appRun()");
 			
 			//put code to read STDIN when input is writen
@@ -251,9 +246,19 @@ unsigned int 	cspt;	//port
 				case g_s_ok:
 					if (Oid==0){
 						set_start(ServX);//para o servico X
+					}else{
+						serv_start();
+						//set next ring address
+						//conect to ring
 					}
 					break;
-				case s_s_ok:
+				case s_s_ok: //caso de 
+					//next ring element is himself
+					Oid=id;
+					strcpy(Oip,ip);
+					Otpt=tpt;
+					serv_start();//executar o codigo do state g_s_ok para Oid!=0 (entrar no anel)
+					AppState.state=nready;
 					break;
 				default: break;	
 			}
