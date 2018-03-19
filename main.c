@@ -113,12 +113,17 @@ unsigned int 	cspt;	//port
 	void set_ds(int x){
 		sprintf(myBuffer,"SET_DS %i;%i;%s;%i\n",x,id,ip,upt);
 		mysend(udp_fp,SC_addr);
+	}
+	void Ans_set_ds(){
+		int n;
 		myrecv(udp_fp,SC_addr);
+		if (0!=sscanf(myBuffer,"OK %i;",&n) && n==id) {AppState.state=s_ds_ok;AppState.ds=true;}
 	}
 	void withdraw_ds(int x){
 		sprintf(myBuffer,"WITHDRAW_DS %i;%i\n",x,id);
 		mysend(udp_fp,SC_addr);
 		myrecv(udp_fp,SC_addr);//o servidor Central responde! Existe erro
+		AppState.ds=false;
 	}
 	void set_start (int x){
 		sprintf(myBuffer,"SET_START %i;%i;%s;%i\n",x,id,ip,tpt);//verify tpt
@@ -128,7 +133,6 @@ unsigned int 	cspt;	//port
 	void Ans_set_start(){
 		int n;
 		myrecv(udp_fp,SC_addr);
-		AppState.state=s_s_ok;
 		if (0!=sscanf(myBuffer,"OK %i;",&n) && n==id) {AppState.state=s_s_ok;AppState.ss=true;}
 	}
 	void withdraw_start(int x){
@@ -189,7 +193,7 @@ unsigned int 	cspt;	//port
 			fprintf(stderr,">>join with id %d\n",ServX);
 			get_start(ServX);
 		}else if(myScmp("show_state")){
-			printf("\tServerState: %i (ss: %i  /  ds: %i)\n",AppState.state,AppState.ss,AppState.ds);
+			printf("\tServerState(%i{Serv:%i}): %i (ss: %i  /  ds: %i)\n",id,ServX,AppState.state,AppState.ss,AppState.ds);
 			//print state
 		}else if (myScmp("leave")){
 			//saida do servidor do anel
@@ -206,7 +210,7 @@ unsigned int 	cspt;	//port
 	void appRun(){
 		//main code for service functionally
 		//wait for new information to be read from any file descriptor and executs the correct answer for that input
-		enum {idle,busy} state;//state that controls select
+		enum {ini,idle,busy} state;//state that controls select
 		int fd,newfd,afd;
 		fd_set rfds;
 		int maxfd,counter;
@@ -239,6 +243,8 @@ unsigned int 	cspt;	//port
  						break;
 					case s_s: Ans_set_start();
 						break;
+					case s_ds: Ans_set_ds();
+							AppState.state=ready;
 					default: break;	
 				}
 			}
@@ -247,6 +253,7 @@ unsigned int 	cspt;	//port
 					if (Oid==0){
 						set_start(ServX);//para o servico X
 					}else{
+						AppState.state=ready;
 						serv_start();
 						//set next ring address
 						//conect to ring
@@ -257,8 +264,8 @@ unsigned int 	cspt;	//port
 					Oid=id;
 					strcpy(Oip,ip);
 					Otpt=tpt;
-					serv_start();//executar o codigo do state g_s_ok para Oid!=0 (entrar no anel)
-					AppState.state=nready;
+					set_ds(ServX);
+					AppState.state=s_ds;
 					break;
 				default: break;	
 			}
