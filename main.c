@@ -253,6 +253,8 @@ unsigned int 	cspt;	//port
 						set_start(ServX);//para o servico X
 					}
 					break;
+				case s_s_ok:
+					break;
 				default: break;	
 			}
 			
