@@ -104,9 +104,7 @@
 		i++;
 	}
 	//check arguments for service
-	#ifdef app_service
 	if(argCheck!=4)myerr(1,"missing arguments");
-	#endif
 	//get CentralServer IP
 	csh = gethostbyname(SName);
 	if (csh==NULL) myerr(2,"Fail to gethostbyname");
