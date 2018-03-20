@@ -3,6 +3,10 @@
 
 #include <unistd.h>
 #include <string.h>
+#include <netdb.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 void my_service_ON();
 int Ans_myON();

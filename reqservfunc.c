@@ -160,6 +160,7 @@
 				}
 				
 			}
+		}
 	return -1;
 	}
 //Start SetUp
@@ -187,7 +188,7 @@ void appConfg ( int argc,char **argv){
 	if (csh==NULL) myerr(2,"Fail to gethostbyname");
 	csa=(struct in_addr*)csh->h_addr_list[0];
 	//Show Info
-	fprintf(stderr,"Service:\n\tid: %d\n\tip: %s\n\tupt: %d\n\ttpt: %d\n",id,ip,upt,tpt);
+	fprintf(stderr,"RequestService\n");
 	fprintf(stderr,"\nCentralServer:\n\t<%s:%d>\n",SName,cspt);
 	fprintf(stderr,"\tofficial host name: %s\n",csh->h_name);
 	fprintf(stderr,"\tinternet address: %s (%08lX)\n",inet_ntoa(*csa),(long unsigned int)ntohl(csa->s_addr));
