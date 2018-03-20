@@ -2,6 +2,9 @@
 #include <netinet/in.h>
 #include <netinet/ip.h>
 
+#include <string.h>
+#include <stdlib.h>
+
 #define IPSIZE 16
 #define myMaxTCP 10
 #define STDIN 0
@@ -24,8 +27,8 @@ extern int	Oid;
 extern char Oip[IPSIZE];
 extern int	Otpt;
 extern	struct reqserv_state {//indicates the system state 
-		enum {zero,rs,ts,get,a_get,my,a_my,your,a_your,exit} state; //have func getEnum
+		enum {zero,rs,ts,get,a_get,myON,myOFF} state; //have func getEnum
 		enum {off,on} service;// have func getBool
-	} state;
+	}state;
 //socket
 int udp_fp;

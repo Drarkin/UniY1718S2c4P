@@ -8,7 +8,7 @@ int main (int argc, char **argv) {
 		SC_addr.sin_addr=*csa;//MachineIP
 		SC_addr.sin_port=htons(cspt);
 			
-	while(ReqServMachine());
+	ReqServApp();
 	/*#ifdef app_service
 		//udp SC ask for SA
 			//SetUp Sockets

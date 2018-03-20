@@ -1,5 +1,4 @@
-#include "AppServFunc.h"
-	
+#include "reqservfunc.h"	
 	
 //CentralServer Comamnds
 	void my_service_ON(){
@@ -7,9 +6,34 @@
 		mysend(udp_fp,SC_addr);
 	}
 	
+	int Ans_myON(){
+		int n;
+		if(-1==myrecv(udp_fp,SC_addr)){
+			return 0;
+		}
+		if (0!=sscanf(myBuffer,"YOUR_SERVICE ON")) {
+			fprintf(stderr,">>Ok!\n");
+			return 1;
+		}
+		fprintf(stderr,">>Err WrongMsg\n");
+		return 0;
+	}
+	
 	void my_service_OFF(){
 		sprintf(myBuffer,"MY SERVICE  OFF\n");
 		mysend(udp_fp,SC_addr);
+	}
+	int Ans_myOFF(){
+		int n;
+		if(-1==myrecv(udp_fp,SC_addr)){
+			return 0;
+		}
+		if (0!=sscanf(myBuffer,"YOUR_SERVICE OFF")) {
+			fprintf(stderr,">>Ok!\n");
+			return 1;
+		}
+		fprintf(stderr,">>Err WrongMsg\n");
+		return 0;
 	}
 	
 	void your_service_ON(){
@@ -21,18 +45,6 @@
 		sprintf(myBuffer,"YOUR SERVICE  OFF\n");
 		mysend(udp_fp,SC_addr);
 	}
-	int Ans_get_ds_server(){
-		int n;
-		if(-1==myrecv(udp_fp,SC_addr)){
-			return 0;
-		}
-		if (0!=sscanf(myBuffer,"OK %i;%s:%i",&Oid,Oip,&Otpt) && 0!=Oid && 0!=Otpt) {
-			fprintf(stderr,">>Ok!\n);
-			return 1;
-		}
-		fprintf(stderr,">>Err WrongMsg\n");
-		return 0;
-	}
 	void get_ds_server(int x){
 		sprintf(myBuffer,"GET_DS_SERVER %d\n"),x;
 		mysend(udp_fp,SC_addr);
@@ -43,7 +55,7 @@
 			return 0;
 		}
 		if (0!=sscanf(myBuffer,"OK %i;%s:%i",&Oid,Oip,&Otpt) && 0!=Oid && 0!=Otpt) {
-			fprintf(stderr,">>Ok!\n);
+			fprintf(stderr,">>Ok!\n");
 			return 1;
 		}
 		fprintf(stderr,">>Err WrongMsg\n");
@@ -62,7 +74,6 @@
 
 	void myfpClose(){
 		if (udp_fp>=0){ close(udp_fp);udp_fp=-1;}
-		if (tcp_fd>=0){ close(tcp_fd);tcp_fd=-1;}
 		return;
 	}	
 	
@@ -75,16 +86,21 @@
 		/*prevent loopbug*/
 		if (intaux<=0) {getchar();return 0;}
 		if (myScmp("quit")||myScmp("exit")){
-			if (state==false){
+			if ( state.service==off && state.state==zero){
 				return 0;
 			}else printf("Terminate service first!\n");
+		//
 		}else if(myScmp("request_service")||myScmp("rs ")){
-			if (sscanf(" %d",&ServX)){
-				get_ds_server(ServX);
-			}else printf("Wrong input!\n");
-			
+			if (state.service==off){
+				if (sscanf(myBuffer," %d",&ServX)){
+					get_ds_server(ServX);
+					state.state=get;
+				}else printf("Wrong input!\n");
+			}else{
+				printf("Service(%i) is Running\n",ServX);
+			}
 		}else if(myScmp("terminate_service")||myScmp("ts")){
-			if (state){
+			if (state.service){
 				my_service_OFF();
 			}else printf ("No service running\n");
 		}else{
@@ -93,8 +109,8 @@
 		}
 		return 1;
 	}
-	int ReqServMachine(){
-		enum {ini,idle,busy} state;//state that controls select
+	int ReqServApp(){
+		enum {ini,idle,busy} State;//state that controls select
 		int fd,newfd,afd;
 		fd_set rfds;
 		int maxfd,counter;
@@ -102,11 +118,10 @@
 		maxfd=(udp_fp>STDIN)?udp_fp:STDIN;
 		while(1){
 			FD_ZERO(&rfds);
-			FD_SET(tcp_fd,&rfds);
 			FD_SET(udp_fp,&rfds);
 			FD_SET(STDIN,&rfds);
 			//FD_SET((int)STDIN,&rfds);//jefc
-			if(state==busy){FD_SET(afd,&rfds);maxfd=max(maxfd,afd);}
+			if(State==busy){FD_SET(afd,&rfds);maxfd=max(maxfd,afd);}
 			
 			counter=select(maxfd+1,&rfds,
 							(fd_set*)NULL,(fd_set*)NULL,(struct timeval *)NULL);				
@@ -114,12 +129,38 @@
 			
 			//put code to read STDIN when input is writen
 			if (FD_ISSET(STDIN,&rfds)){
-				return userIns();
+				if (userIns())return 0;
 			}
 			if (FD_ISSET(udp_fp,&rfds)){
+				switch (state.state){
+					case get: if(Ans_get_ds_server()){
+							my_service_ON(),
+							state.state=myON;
+						}else {
+							//printf("Failed: GET DS Server\n");
+							state.state=zero;//back to standby
+						}
+						break;
+					case myON: if(Ans_myON()){
+							printf("Service is ON\n");
+							state.service=on;
+							state.state=zero;						
+						}else{
+							state.state=zero;//back to standby
+						}
+					case myOFF: if (Ans_myOFF()){
+							printf ("Service OFF\n");
+							state.service=off;
+							state.state=zero;
+						}else{
+							state.state=zero;//back to standby
+						}
+					break;
+					default:break;
+				}
 				
 			}
-	return 1;
+	return -1;
 	}
 //Start SetUp
 
