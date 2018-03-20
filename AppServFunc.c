@@ -5,10 +5,17 @@
 		sprintf(myBuffer,"SET_DS %i;%i;%s;%i\n",x,id,ip,upt);
 		mysend(udp_fp,SC_addr);
 	}
-	void Ans_set_ds(){
+	int Ans_set_ds(){
 		int n;
-		myrecv(udp_fp,SC_addr);
-		if (0!=sscanf(myBuffer,"OK %i;",&n) && n==id) {AppState.state=s_ds_ok;AppState.ds=true;}
+		if(-1==myrecv(udp_fp,SC_addr)){
+			return 0;
+		}
+		if (0!=sscanf(myBuffer,"OK %i;",&n) && n==id) {
+			fprintf(stderr,">>Ok!\n>AnsData:\n>\tid: %i\n",n);
+			return 1;
+		}
+		fprintf(stderr,">>Err WrongMsg\n");
+		return 0;
 	}
 	void withdraw_ds(int x){
 		sprintf(myBuffer,"WITHDRAW_DS %i;%i\n",x,id);
@@ -21,10 +28,17 @@
 		mysend(udp_fp,SC_addr);
 		AppState.state=s_s;
 	}
-	void Ans_set_start(){
+	int Ans_set_start(){
 		int n;
-		myrecv(udp_fp,SC_addr);
-		if (0!=sscanf(myBuffer,"OK %i;",&n) && n==id) {AppState.state=s_s_ok;AppState.ss=true;}
+		if(-1==myrecv(udp_fp,SC_addr)){
+			return 0;
+		}
+		if (0!=sscanf(myBuffer,"OK %i;",&n) && n==id) {
+			fprintf(stderr,">>Ok!\n>AnsData:\n>\tid: %i\n",n);
+			return 1;
+		}
+		fprintf(stderr,">>Err WrongMsg\n");
+		return 0;
 	}
 	void withdraw_start(int x){
 		sprintf(myBuffer,"WITHDRAW_START %i;%i\n",x,id);
@@ -41,12 +55,14 @@
 	}
 	int Ans_get_start(){
 		int n;
-		myrecv(udp_fp,SC_addr);
+		if (-1==myrecv(udp_fp,SC_addr)){			
+			return 0;
+		}
 		if (0!=sscanf(myBuffer,"OK %i;%i;%s;%i\n",&n,&Oid,Oip,&Otpt) && n==id){
-			fprintf(stderr,"AnsData:\n\tid: %i\n\tip %s\n\ttpt %i\n",Oid,Oip,Otpt);
+			fprintf(stderr,">>Ok!\n>AnsData:\n>\tid: %i\n>\tip %s\n>\ttpt %i\n",Oid,Oip,Otpt);
 			return 1;
 		}
-		fprintf(stderr,"Err WrongMsg\n");
+		fprintf(stderr,">>Err WrongMsg\n");
 		return 0;
 	}
 	void serv_start(){

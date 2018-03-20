@@ -70,10 +70,16 @@
 							if (Ans_get_start())AppState.state=g_s_ok;
 							else AppState.state=nready;
  						break;
-					case s_s: Ans_set_start();
+					case s_s: if (Ans_set_start()){
+						AppState.state=s_s_ok;
+						AppState.ss=true;
+						}else AppState.state=nready;
 						break;
-					case s_ds: Ans_set_ds();
-							AppState.state=ready;
+					case s_ds: if (Ans_set_ds()){
+							AppState.state=s_ds_ok;
+							AppState.ds=true;
+						}
+						AppState.state=ready;
 					default: break;	
 				}
 			}
@@ -93,6 +99,7 @@
 					Oid=id;
 					strcpy(Oip,ip);
 					Otpt=tpt;
+					//
 					set_ds(ServX);
 					AppState.state=s_ds;
 					break;

@@ -15,10 +15,10 @@
 	void myfpClose();
 //CentralServer Comamnds
 	void set_ds(int x);
-	void Ans_set_ds();
+	int Ans_set_ds();
 	void withdraw_ds(int x);
 	void set_start (int x);
-	void Ans_set_start();
+	int Ans_set_start();
 	void withdraw_start(int x);
 	void get_start(int x);
 	int Ans_get_start();
