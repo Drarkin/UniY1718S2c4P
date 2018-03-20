@@ -16,6 +16,7 @@
 			if (AppState.ss==true){
 				withdraw_start(ServX);
 			}
+			AppState.ring=false;
 		}else if(myScmp("join")){
 			//entrar no anel do serviço x
 			// por omissao entrar no anel disponicel
@@ -23,7 +24,7 @@
 			fprintf(stderr,">>join with id %d\n",ServX);
 			get_start(ServX);
 		}else if(myScmp("show_state")){
-			printf("\tServerState(%i{Serv:%i}): %i (ss: %i  /  ds: %i)\n",id,ServX,AppState.state,AppState.ss,AppState.ds);
+			printf(">ServerState(myID:%i{Serv:%i}): %i (ss: %i  /  ds: %i / ring: %i)\n",id,ServX,AppState.state,AppState.ss,AppState.ds,AppState.ring);
 			//print state
 		}else if (myScmp("leave")){
 			//saida do servidor do anel
@@ -76,10 +77,9 @@
 						}else AppState.state=nready;
 						break;
 					case s_ds: if (Ans_set_ds()){
-							AppState.state=s_ds_ok;
+							AppState.state=ready;
 							AppState.ds=true;
-						}
-						AppState.state=ready;
+						}else AppState.state=w_s;//devido a erro remover from start server
 					default: break;	
 				}
 			}
@@ -88,7 +88,8 @@
 					if (Oid==0){
 						set_start(ServX);//para o servico X
 					}else{
-						AppState.state=ready;
+						AppState.ring=true;
+						AppState.state=join;
 						serv_start();
 						//set next ring address
 						//conect to ring
