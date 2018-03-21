@@ -2,8 +2,10 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
+#include <arpa/inet.h>
 #include <stdio.h>
 #include <string.h>
+
 
 #define buffersize 1024
 #define myRecv myrecv
