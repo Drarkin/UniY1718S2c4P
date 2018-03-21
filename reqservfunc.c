@@ -87,7 +87,7 @@
 		if (intaux<=0) {getchar();return 0;}
 		if (myScmp("quit")||myScmp("exit")){
 			if ( state.service==off && state.state==zero){
-				return 0;
+				return 1;
 			}else printf("Terminate service first!\n");
 		//
 		}else if(myScmp("request_service")||myScmp("rs ")){
@@ -107,7 +107,7 @@
 			fprintf(stdout,"Unknow Command!\n");
 			fflush(stdout);
 		}
-		return 1;
+		return 0;
 	}
 	int ReqServApp(){
 		enum {ini,idle,busy} State;//state that controls select
