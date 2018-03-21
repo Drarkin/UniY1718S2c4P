@@ -90,9 +90,18 @@
 				return 1;
 			}else printf("Terminate service first!\n");
 		//
-		}else if(myScmp("request_service")||myScmp("rs ")){
+		}else if(myScmp("request_service")){
 			if (state.service==off){
-				if (sscanf(myBuffer," %d",&ServX)){
+				if (sscanf(&myBuffer[15],"%d",&ServX)){
+					get_ds_server(ServX);
+					state.state=get;
+				}else printf("Wrong input!\n");
+			}else{
+				printf("Service(%i) is Running\n",ServX);
+			}
+		}else if(myScmp("rs ")){
+			if (state.service==off){
+				if (sscanf(&myBuffer[2],"%d",&ServX)){
 					get_ds_server(ServX);
 					state.state=get;
 				}else printf("Wrong input!\n");
@@ -103,6 +112,8 @@
 			if (state.service){
 				my_service_OFF();
 			}else printf ("No service running\n");
+		}else if(myScmp("help")||myScmp("h")){
+			printf ("\trequest_service (rs) <number>\n\tterminate_service (ts)\n");
 		}else{
 			fprintf(stdout,"Unknow Command!\n");
 			fflush(stdout);
