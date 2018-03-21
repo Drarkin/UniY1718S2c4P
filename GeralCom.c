@@ -2,6 +2,7 @@
 
 #define printMSG fprintf(stdout,"Ans[%i]{%s:%i}: %s\n",fd,inet_ntoa(addrin.sin_addr),addrin.sin_port,myBuffer);
 	char myBuffer [buffersize];
+	struct sockaddr_in LastInAddr;
 //Func
 	void bufferclean(){
 		int i;
@@ -44,5 +45,6 @@
 				bufferclean();
 			}
 		}
+		LastInAddr=addrin;
 		return n;
 	}
