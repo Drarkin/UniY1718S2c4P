@@ -1,4 +1,4 @@
-service:
+server:
 	gcc GeralCom.c -o GeralCom.o -c
 	gcc AppServVar.c -o AppServVar.o -c
 	gcc AppServFunc.c -o AppServFunc.o -c
@@ -6,7 +6,7 @@ service:
 	gcc AppServ.c -o AppServ.o -c
 	gcc -o service AppServ.o AppServSystem.o AppServFunc.o AppServVar.o GeralCom.o 
 	
-request:
+client:
 	gcc GeralCom.c -o GeralCom.o -c
 	gcc reqservfunc.c -o reqservfunc.o -c
 	gcc reqservVar.c -o reqservVar.o -c
