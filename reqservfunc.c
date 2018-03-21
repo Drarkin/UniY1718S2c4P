@@ -51,14 +51,16 @@
 	}
 	int Ans_get_ds_server(){
 		int n;
+        //Set old values to zero
+        Oid=-1;Otpt=-1;strcpy(Oip,"---.---.---.---");
 		if(-1==myrecv(udp_fp,SC_addr)){
 			return 0;
 		}
-		if (3==sscanf(myBuffer,"OK %i;%s;%i",&Oid,Oip,&Otpt)) {
-			fprintf(stderr,">>Ok!\n");
+		if (3==sscanf(myBuffer,"OK %i;%[^;];%i",&Oid,Oip,&Otpt)) {
+			fprintf(stderr,">>Ok! (%i %s %i )\n",Oid,Oip,Otpt);
 			return 1;
 		}
-		fprintf(stderr,">>Err WrongMsg\n");
+		fprintf(stderr,">>Err WrongMsg! (%i %s %i )\n",Oid,Oip,Otpt);
 		return 0;
 	}
 	
