@@ -1,4 +1,14 @@
 #include "AppServSystem.h"
+	int ReadyStateMachine(){
+		if (-1==myrecv(udp_fp,SC_addr)){	
+			return AppState.state;//do't change state
+		}
+		if myScmp("YOUR_SERVICE ON\n"){
+			return busy;
+		}
+		return AppState.state;//do't change state
+	}
+
 	int userIns(){
 		//reads user input from stdin and calls the correct function to execut user command
 		int intaux;
@@ -86,7 +96,14 @@
 					case s_ds: if (Ans_set_ds()){
 							AppState.state=ready;
 							AppState.ds=true;
-						}else AppState.state=w_s;//devido a erro remover from start server
+						}else{
+							AppState.state=nready;//w_s;//devido a erro remover from start server
+							withdraw_start(ServX);
+						}
+						break;
+					case ready:
+						
+						break;
 					default: break;	
 				}
 			}

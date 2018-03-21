@@ -72,6 +72,14 @@
 	void serv_start(){
 		fprintf(stderr,">>Start Exists [%d@%s:%d]\n",Oid,Oip,Otpt);	
 	}
+//client
+	void your_service_ON(struct sockaddr_in addr){
+		mySend("YOUR SERVICE  ON\n",udp_fp,SC_addr);
+	}
+	
+	void your_service_OFF(struct sockaddr_in addr){
+		mySend("YOUR SERVICE  OFF\n",udp_fp,SC_addr);
+	}
 //Exit & Eror
 
 	void myerr(int code,char* msg){

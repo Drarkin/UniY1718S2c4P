@@ -23,6 +23,10 @@
 	void get_start(int x);
 	int Ans_get_start();
 	void serv_start();
+//client
+	void your_service_ON(struct sockaddr_in addr);
+	
+	void your_service_OFF(struct sockaddr_in addr);
 //Exit & Error
 	void myerr(int code,char* msg);
 	void myfpClose();
