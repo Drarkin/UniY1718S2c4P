@@ -3,7 +3,20 @@
 		if (-1==myrecv(udp_fp,SC_addr)){	
 			return AppState.state;//do't change state
 		}
-		if myScmp("YOUR_SERVICE ON\n"){
+		if myScmp("MY_SERVICE ON\n"){
+			//need to get it better organized
+			C_addr=LastInAddr;//saves client addr
+			if(-1==mySend("YOUR_SERVICE ON\n",udp_fp,C_addr)){
+				//fail to send
+				return AppState.state;
+			}
+			if (AppState.ring){
+				//in ring pass to next ds
+			}else{
+				//alone
+				printf(">>Busy on client (%s:%d)\n",inet_ntoa(C_addr.sin_addr),C_addr.sin_port);
+				withdraw_ds(ServX);
+			}
 			return busy;
 		}
 		return AppState.state;//do't change state
