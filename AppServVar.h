@@ -35,6 +35,8 @@ extern	unsigned int	tpt;
 extern	int 	udp_fp;
 extern	int 	tcp_fd;
 extern	struct 	sockaddr_in sudp,stcp;
+// Client address
+extern struct sockaddr_in C_addr;
 	//SC adress
 extern	struct 	sockaddr_in SC_addr;	
 	//SC NextRingServer

@@ -27,6 +27,8 @@ unsigned int 	cspt;	//port
 	int udp_fp=-1;
 	int tcp_fd=-1;
 	struct sockaddr_in sudp,stcp;
+//Client adress	
+struct sockaddr_in C_addr;
 	//SC adress
 	struct sockaddr_in SC_addr;	
 	//SC NextRingServer
