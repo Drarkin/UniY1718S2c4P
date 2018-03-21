@@ -16,6 +16,11 @@
 			if (AppState.ss==true){
 				withdraw_start(ServX);
 			}
+            //Reset StartServerInfo O vars
+            strcpy(Oip,"---.---.---.---");
+            Oid=-1;
+            ServX=-1;
+            printf(">QUIT\n");
 			AppState.ring=false;
 		}else if(myScmp("join")){
 			//entrar no anel do serviço x
@@ -24,7 +29,9 @@
 			fprintf(stderr,">>join with id %d\n",ServX);
 			get_start(ServX);
 		}else if(myScmp("show_state")){
-			printf(">ServerState(myID:%i{Serv:%i}): %i (ss: %i  /  ds: %i / ring: %i)\n",id,ServX,AppState.state,AppState.ss,AppState.ds,AppState.ring);
+			printf(">ServerState(myID:%i;ServX:%i;startS:%d@%s): %i (ss: %i  /  ds: %i / ring: %i)\n",id,ServX,
+                   Oid,Oip,
+                   AppState.state,AppState.ss,AppState.ds,AppState.ring);
 			//print state
 		}else if (myScmp("leave")){
 			//saida do servidor do anel

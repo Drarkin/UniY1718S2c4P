@@ -6,15 +6,15 @@
 		mysend(udp_fp,SC_addr);
 	}
 	int Ans_set_ds(){
-		int n;
+		int n=-1;
 		if(-1==myrecv(udp_fp,SC_addr)){
 			return 0;
 		}
 		if (0!=sscanf(myBuffer,"OK %i;",&n) && n==id) {
-			fprintf(stderr,">>Ok!\n>AnsData:\n>\tid: %i\n",n);
+			fprintf(stderr,">>Ok!\t(id: %i )\n",n);
 			return 1;
 		}
-		fprintf(stderr,">>Err WrongMsg\n");
+		fprintf(stderr,">>Err WrongMsg ( %d )\n",n);
 		return 0;
 	}
 	void withdraw_ds(int x){
@@ -29,15 +29,15 @@
 		AppState.state=s_s;
 	}
 	int Ans_set_start(){
-		int n;
+		int n=-1;
 		if(-1==myrecv(udp_fp,SC_addr)){
 			return 0;
 		}
 		if (0!=sscanf(myBuffer,"OK %i;",&n) && n==id) {
-			fprintf(stderr,">>Ok!\n>AnsData:\n>\tid: %i\n",n);
+			fprintf(stderr,">>Ok!\t(id: %d ;)\n",n);
 			return 1;
 		}
-		fprintf(stderr,">>Err WrongMsg\n");
+		fprintf(stderr,">>Err WrongMsg ( %d )\n",n);
 		return 0;
 	}
 	void withdraw_start(int x){
@@ -54,15 +54,19 @@
 		return;
 	}
 	int Ans_get_start(){
-		int n;
+		int n=-1;
+        //clean vars
+        Oid=-1;
+        strcpy(Oip,"---.---.---.---");
+        Otpt=-1;
 		if (-1==myrecv(udp_fp,SC_addr)){			
 			return 0;
 		}
-		if (0!=sscanf(myBuffer,"OK %i;%i;%s;%i\n",&n,&Oid,Oip,&Otpt) && n==id){
-			fprintf(stderr,">>Ok!\n>AnsData:\n>\tid: %i\n>\tip %s\n>\ttpt %i\n",Oid,Oip,Otpt);
+		if (0!=sscanf(myBuffer,"OK %i;%i;%[^;];%i\n",&n,&Oid,Oip,&Otpt) && n==id){
+			fprintf(stderr,">>Ok!\t(myid: %i ;id2: %i ;ip2: %s ;tpt2: %i)\n",n,Oid,Oip,Otpt);
 			return 1;
 		}
-		fprintf(stderr,">>Err WrongMsg\n");
+		fprintf(stderr,">>Err WrongMsg! (%d %d %s %d)\n",Oid,n,Oip,Otpt);
 		return 0;
 	}
 	void serv_start(){
@@ -119,6 +123,12 @@
 		}
 		i++;
 	}
+    //reset O var
+
+    strcpy(Oip,"---.---.---.---");
+    Oid=-1;
+    
+    ServX=-1;
 	//check arguments for service
 	if(argCheck!=4)myerr(1,"missing arguments");
 	//get CentralServer IP
