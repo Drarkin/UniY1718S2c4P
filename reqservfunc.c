@@ -46,7 +46,7 @@
 		mysend(udp_fp,SC_addr);
 	}
 	void get_ds_server(int x){
-		sprintf(myBuffer,"GET_DS_SERVER %d\n"),x;
+		sprintf(myBuffer,"GET_DS_SERVER %d\n",x);
 		mysend(udp_fp,SC_addr);
 	}
 	int Ans_get_ds_server(){
@@ -54,7 +54,7 @@
 		if(-1==myrecv(udp_fp,SC_addr)){
 			return 0;
 		}
-		if (0!=sscanf(myBuffer,"OK %i;%s:%i",&Oid,Oip,&Otpt) && 0!=Oid && 0!=Otpt) {
+		if (3==sscanf(myBuffer,"OK %i;%s;%i",&Oid,Oip,&Otpt)) {
 			fprintf(stderr,">>Ok!\n");
 			return 1;
 		}
