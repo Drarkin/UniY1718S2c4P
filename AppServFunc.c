@@ -139,6 +139,7 @@
 
     strcpy(Oip,"---.---.---.---");
     Oid=-1;
+	Otpt=-1;
     
     ServX=-1;
 	//check arguments for service

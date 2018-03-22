@@ -6,6 +6,7 @@
 #define myMaxTCP 10
 #define STDIN 0
 
+#define GetMState AppMainStateName[AppState.state]
 #define max(A,B) ((A)>=(B)?(A):(B))
 #define myScmp(A) (strncmp(myBuffer,A,strlen(A))==0)
 //configuration of App
@@ -43,9 +44,11 @@ extern	struct 	sockaddr_in SC_addr;
 extern	struct 	sockaddr_in ring_addr;//tcp addres to comunivcate with other ring elements
 	//Other ServiceServerInfo
 extern	struct app_service_state {//indicates the system state 
-		enum {nready,g_s,g_s_ok,s_s,s_s_ok,s_ds,s_ds_ok,joinR,joinR_k,leaver,leaveR_ok,ready,busy,w_ds,w_ds_ok,w_s,w_s_ok} state; //have func getEnum
+		enum {nready,g_s,g_s_ok,s_s,s_s_ok,s_ds,s_ds_ok,joinR,joinR_ok,leaveR,leaveR_ok,ready,busy,w_ds,w_ds_ok,w_s,w_s_ok} state; //have func getEnum
 		enum {false,true} ds,ss,ring;// have func getBool
 	}AppState;
+extern const char *AppMainStateName[];
+//const char *getstate();/**/
 extern	int 	ServX;
 extern	int		Oid;
 extern	char	Oip[IPSIZE];
