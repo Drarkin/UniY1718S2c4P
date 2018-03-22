@@ -43,8 +43,9 @@
 				printf(">>Free client (%s:%d)\n",inet_ntoa(C_addr.sin_addr),C_addr.sin_port);
 				set_ds(ServX);
 				return s_ds;
-			}else fprintf(stderr,">>Wrong MSG for BusyState!\n");
+			fprintf(stderr,">>Wrong MSG for BusyState!\n");
 			return busy;
+			}
 		}
 		return AppState.state;//do't change state
 	}
@@ -81,7 +82,7 @@
 				fprintf(stderr,">>join with id %d\n",ServX);
 				get_start(ServX);
 			}else{
-				fprintf(stderr,">>Already joined ServX:%d\n",ServX);
+				fprintf(stderr,">>Can't Join Now! Already joined ServX:%d\n`\n\tUse \"Force w_ss\" to frocefull remove the service\n",ServX);
 			}
 		}else if(myScmp("show_state")){
 			printf(">ServerState(myID:%i;ServX:%i;startS:%d@%s): %i (ss: %i  /  ds: %i / ring: %i)\n",id,ServX,
@@ -92,6 +93,10 @@
 			//saida do servidor do anel
 		}else if myScmp("set_ds"){
 			fprintf(stderr,">>SET_DS!\n");
+		}else if myScmp("Force w_ss"){
+			fprintf(stderr,">>Force W_SS!\n");
+			withdraw_start(ServX);
+			ServX=-1;
 		}else{
 			fprintf(stdout,"Unknow Command!\n");
 			fflush(stdout);
@@ -161,7 +166,7 @@
 						set_start(ServX);//para o servico X
 					}else{
 						AppState.ring=true;
-						AppState.state=join;
+						AppState.state=joinR;
 						serv_start();
 						//set next ring address
 						//conect to ring

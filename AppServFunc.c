@@ -64,6 +64,10 @@
 		}
 		if (0!=sscanf(myBuffer,"OK %i;%i;%[^;];%i\n",&n,&Oid,Oip,&Otpt) && n==id){
 			fprintf(stderr,">>Ok!\t(myid: %i ;id2: %i ;ip2: %s ;tpt2: %i)\n",n,Oid,Oip,Otpt);
+			if(n==Oid){
+				fprintf(stderr,"Err! Exists already a ServiceServer with same id\n");
+				return 0;
+			}
 			return 1;
 		}
 		fprintf(stderr,">>Err WrongMsg! (%d %d %s %d)\n",Oid,n,Oip,Otpt);
