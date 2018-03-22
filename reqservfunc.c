@@ -2,7 +2,7 @@
 	
 //CentralServer Comamnds
 	void my_service_ON(){
-		sprintf(myBuffer,"MY SERVICE  ON\n");
+		sprintf(myBuffer,"MY_SERVICE ON\n");
 		mysend(udp_fp,S_addr);
 	}
 	
@@ -11,7 +11,7 @@
 		if(-1==myrecv(udp_fp,&S_addr)){
 			return 0;
 		}
-		if (0!=sscanf(myBuffer,"YOUR_SERVICE ON")) {
+		if (myScmp("YOUR_SERVICE ON")) {
 			fprintf(stderr,">>Ok!\n");
 			return 1;
 		}
@@ -20,7 +20,7 @@
 	}
 	
 	void my_service_OFF(){
-		sprintf(myBuffer,"MY SERVICE  OFF\n");
+		sprintf(myBuffer,"MY_SERVICE OFF\n");
 		mysend(udp_fp,S_addr);
 	}
 	int Ans_myOFF(){
@@ -28,7 +28,7 @@
 		if(-1==myrecv(udp_fp,&S_addr)){
 			return 0;
 		}
-		if (0!=sscanf(myBuffer,"YOUR_SERVICE OFF")) {
+		if (myScmp("YOUR_SERVICE OFF")) {
 			fprintf(stderr,">>Ok!\n");
 			return 1;
 		}
@@ -37,12 +37,12 @@
 	}
 	
 	void your_service_ON(){
-		sprintf(myBuffer,"YOUR SERVICE  ON\n");
+		sprintf(myBuffer,"YOUR_SERVICE ON\n");
 		mysend(udp_fp,S_addr);
 	}
 	
 	void your_service_OFF(){
-		sprintf(myBuffer,"YOUR SERVICE  OFF\n");
+		sprintf(myBuffer,"YOUR_SERVICE OFF\n");
 		mysend(udp_fp,SC_addr);
 	}
 	void get_ds_server(int x){
