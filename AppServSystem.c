@@ -70,6 +70,7 @@
             //Reset StartServerInfo O vars
             strcpy(Oip,"---.---.---.---");
             Oid=-1;
+			Otpt=-1;
             ServX=-1;
             printf(">QUIT\n");
 			AppState.ring=false;
@@ -85,9 +86,9 @@
 				fprintf(stderr,">>Can't Join Now! Already joined ServX:%d\n`\n\tUse \"Force w_ss\" to frocefull remove the service\n",ServX);
 			}
 		}else if(myScmp("show_state")){
-			printf(">ServerState(myID:%i;ServX:%i;startS:%d@%s): %i (ss: %i  /  ds: %i / ring: %i)\n",id,ServX,
-                   Oid,Oip,
-                   AppState.state,AppState.ss,AppState.ds,AppState.ring);
+			printf(">ServerState:\n\tmyID:%i;\n\tServX:%i;\n\tstartS: %d@%s:%d\n\t%s (ss: %i  /  ds: %i / ring: %i)\n",id,ServX,
+                   Oid,Oip,Otpt,
+                   GetMState,AppState.ss,AppState.ds,AppState.ring);
 			//print state
 		}else if (myScmp("leave")){
 			//saida do servidor do anel

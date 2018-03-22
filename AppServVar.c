@@ -40,3 +40,27 @@ struct sockaddr_in C_addr;
 	char	Oip[IPSIZE];
 	int	Otpt;
 //#endif
+const char *AppMainStateName[]={"nready", "g_s", "g_s_ok", "s_s", "s_s_ok", "s_ds", "s_ds_ok", "joinR", "joinR_ok", "leaveR", "leaveR_ok", "ready", "busy", "w_ds", "w_ds_ok", "w_s", "w_s_ok"};
+/*const char *getstate(){
+	return AppMainStateName[AppState.state];
+	/*switch(AppState.state){
+		case nready:return "nready";
+		case g_s:return "g_s";
+		case g_s_ok:return "g_s_ok";
+		case s_s:return "s_s";
+		case s_s_ok:return "s_s_ok";
+		case s_ds:return "s_ds";
+		case s_ds_ok:return "s_ds_ok";
+		case joinR:return "joinR";
+		case joinR_ok: return "joinR_ok";
+		case leaveR: return "leaveR";
+		case leaveR_ok: return "leaveR_ok";
+		case ready: return "ready";
+		case busy: return "busy";
+		case w_ds: return "w_ds";
+		case w_ds_ok: return "w_ds_ok";
+		case w_s: return "w_s";
+		case w_s_ok:return "w_s_ok";
+		default: return "Unknown";
+	}
+}*/

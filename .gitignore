@@ -5,3 +5,4 @@ service
 *.o
 *.o
 GeralCom.o
+*.o
