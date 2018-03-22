@@ -7,7 +7,7 @@
 	}
 	int Ans_set_ds(){
 		int n=-1;
-		if(-1==myrecv(udp_fp,SC_addr)){
+		if(-1==myrecv(udp_fp,&SC_addr)){
 			return 0;
 		}
 		if (0!=sscanf(myBuffer,"OK %i;",&n) && n==id) {
@@ -20,7 +20,7 @@
 	void withdraw_ds(int x){
 		sprintf(myBuffer,"WITHDRAW_DS %i;%i\n",x,id);
 		mysend(udp_fp,SC_addr);
-		myrecv(udp_fp,SC_addr);//o servidor Central responde! Existe erro
+		myrecv(udp_fp,&SC_addr);//o servidor Central responde! Existe erro
 		AppState.ds=false;
 	}
 	void set_start (int x){
@@ -30,7 +30,7 @@
 	}
 	int Ans_set_start(){
 		int n=-1;
-		if(-1==myrecv(udp_fp,SC_addr)){
+		if(-1==myrecv(udp_fp,&SC_addr)){
 			return 0;
 		}
 		if (0!=sscanf(myBuffer,"OK %i;",&n) && n==id) {
@@ -43,7 +43,7 @@
 	void withdraw_start(int x){
 		sprintf(myBuffer,"WITHDRAW_START %i;%i\n",x,id);
 		mysend(udp_fp,SC_addr);
-		myrecv(udp_fp,SC_addr);
+		myrecv(udp_fp,&SC_addr);
 		AppState.ss=false;
 	}
 	void get_start(int x){
@@ -59,7 +59,7 @@
         Oid=-1;
         strcpy(Oip,"---.---.---.---");
         Otpt=-1;
-		if (-1==myrecv(udp_fp,SC_addr)){			
+		if (-1==myrecv(udp_fp,&SC_addr)){			
 			return 0;
 		}
 		if (0!=sscanf(myBuffer,"OK %i;%i;%[^;];%i\n",&n,&Oid,Oip,&Otpt) && n==id){

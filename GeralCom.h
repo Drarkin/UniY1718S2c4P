@@ -13,4 +13,4 @@ extern char myBuffer [buffersize];
 extern struct sockaddr_in LastInAddr;
 int mySend(char *msg,int fd, struct sockaddr_in addr);
 int mysend(int fd, struct sockaddr_in addr);
-int myrecv(int fd,struct sockaddr_in addr);
+int myrecv(int fd,struct sockaddr_in *addr);

@@ -1,6 +1,6 @@
 #include "AppServSystem.h"
 	int ReadyStateMachine(){
-		if (-1==myrecv(udp_fp,SC_addr)){	
+		if (-1==myrecv(udp_fp,NULL)){	
 			return AppState.state;//do't change state
 		}
 		if myScmp("MY_SERVICE ON\n"){
