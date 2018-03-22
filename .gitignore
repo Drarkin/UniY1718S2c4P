@@ -4,3 +4,4 @@
 service
 *.o
 *.o
+GeralCom.o

@@ -3,12 +3,12 @@
 //CentralServer Comamnds
 	void my_service_ON(){
 		sprintf(myBuffer,"MY SERVICE  ON\n");
-		mysend(udp_fp,SC_addr);
+		mysend(udp_fp,S_addr);
 	}
 	
 	int Ans_myON(){
 		int n;
-		if(-1==myrecv(udp_fp,SC_addr)){
+		if(-1==myrecv(udp_fp,S_addr)){
 			return 0;
 		}
 		if (0!=sscanf(myBuffer,"YOUR_SERVICE ON")) {
@@ -21,11 +21,11 @@
 	
 	void my_service_OFF(){
 		sprintf(myBuffer,"MY SERVICE  OFF\n");
-		mysend(udp_fp,SC_addr);
+		mysend(udp_fp,S_addr);
 	}
 	int Ans_myOFF(){
 		int n;
-		if(-1==myrecv(udp_fp,SC_addr)){
+		if(-1==myrecv(udp_fp,S_addr)){
 			return 0;
 		}
 		if (0!=sscanf(myBuffer,"YOUR_SERVICE OFF")) {
@@ -38,7 +38,7 @@
 	
 	void your_service_ON(){
 		sprintf(myBuffer,"YOUR SERVICE  ON\n");
-		mysend(udp_fp,SC_addr);
+		mysend(udp_fp,S_addr);
 	}
 	
 	void your_service_OFF(){
@@ -54,6 +54,10 @@
         //Set old values to zero
         Oid=-1;Otpt=-1;strcpy(Oip,"---.---.---.---");
 		if(-1==myrecv(udp_fp,SC_addr)){
+			return 0;
+		}
+		if (myScmp("OK 0;0.0.0.0;0")){
+			printf(">>No Service Server Avaiable!\n");
 			return 0;
 		}
 		if (3==sscanf(myBuffer,"OK %i;%[^;];%i",&Oid,Oip,&Otpt)) {
@@ -113,6 +117,7 @@
 		}else if(myScmp("terminate_service")||myScmp("ts")){
 			if (state.service){
 				my_service_OFF();
+				state.state=myOFF;
 			}else printf ("No service running\n");
 		}else if(myScmp("help")||myScmp("h")){
 			printf ("\trequest_service (rs) <number>\n\tterminate_service (ts)\n");
@@ -147,6 +152,10 @@
 			if (FD_ISSET(udp_fp,&rfds)){
 				switch (state.state){
 					case get: if(Ans_get_ds_server()){
+							//service address
+							S_addr.sin_addr.s_addr=inet_addr(Oip);
+							S_addr.sin_family=AF_INET;
+							S_addr.sin_port=Otpt; 
 							my_service_ON(),
 							state.state=myON;
 						}else {
@@ -161,14 +170,15 @@
 						}else{
 							state.state=zero;//back to standby
 						}
+						break;
 					case myOFF: if (Ans_myOFF()){
-							printf ("Service OFF\n");
+							printf (">>Service OFF\n");
 							state.service=off;
 							state.state=zero;
 						}else{
 							state.state=zero;//back to standby
 						}
-					break;
+						break;
 					default:break;
 				}
 				
