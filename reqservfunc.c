@@ -87,8 +87,8 @@
 	int userIns(){
 		//reads user input from stdin and calls the correct function to execut user command
 		int intaux;
-		myBuffer[0]='\0';//Reset burffer data
-		intaux=scanf("%[^\n]",myBuffer);
+		bufferclean();//Reset burffer data
+		intaux=read(STDIN,myBuffer,buffersize-1);//prevent buffer overflow
 		/*prevent loopbug*/
 		if (intaux<=0) {getchar();return 0;}
 		if (myScmp("quit")||myScmp("exit")){
