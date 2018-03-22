@@ -5,15 +5,22 @@
 		sprintf(myBuffer,"SET_DS %i;%i;%s;%i\n",x,id,ip,upt);
 		mysend(udp_fp,SC_addr);
 	}
-	void Ans_set_ds(){
-		int n;
-		myrecv(udp_fp,SC_addr);
-		if (0!=sscanf(myBuffer,"OK %i;",&n) && n==id) {AppState.state=s_ds_ok;AppState.ds=true;}
+	int Ans_set_ds(){
+		int n=-1;
+		if(-1==myrecv(udp_fp,&SC_addr)){
+			return 0;
+		}
+		if (0!=sscanf(myBuffer,"OK %i;",&n) && n==id) {
+			fprintf(stderr,">>Ok!\t(id: %i )\n",n);
+			return 1;
+		}
+		fprintf(stderr,">>Err WrongMsg ( %d )\n",n);
+		return 0;
 	}
 	void withdraw_ds(int x){
 		sprintf(myBuffer,"WITHDRAW_DS %i;%i\n",x,id);
 		mysend(udp_fp,SC_addr);
-		myrecv(udp_fp,SC_addr);//o servidor Central responde! Existe erro
+		myrecv(udp_fp,&SC_addr);//o servidor Central responde! Existe erro
 		AppState.ds=false;
 	}
 	void set_start (int x){
@@ -21,15 +28,22 @@
 		mysend(udp_fp,SC_addr);
 		AppState.state=s_s;
 	}
-	void Ans_set_start(){
-		int n;
-		myrecv(udp_fp,SC_addr);
-		if (0!=sscanf(myBuffer,"OK %i;",&n) && n==id) {AppState.state=s_s_ok;AppState.ss=true;}
+	int Ans_set_start(){
+		int n=-1;
+		if(-1==myrecv(udp_fp,&SC_addr)){
+			return 0;
+		}
+		if (0!=sscanf(myBuffer,"OK %i;",&n) && n==id) {
+			fprintf(stderr,">>Ok!\t(id: %d ;)\n",n);
+			return 1;
+		}
+		fprintf(stderr,">>Err WrongMsg ( %d )\n",n);
+		return 0;
 	}
 	void withdraw_start(int x){
 		sprintf(myBuffer,"WITHDRAW_START %i;%i\n",x,id);
 		mysend(udp_fp,SC_addr);
-		myrecv(udp_fp,SC_addr);
+		myrecv(udp_fp,&SC_addr);
 		AppState.ss=false;
 	}
 	void get_start(int x){
@@ -40,17 +54,35 @@
 		return;
 	}
 	int Ans_get_start(){
-		int n;
-		myrecv(udp_fp,SC_addr);
-		if (0!=sscanf(myBuffer,"OK %i;%i;%s;%i\n",&n,&Oid,Oip,&Otpt) && n==id){
-			fprintf(stderr,"AnsData:\n\tid: %i\n\tip %s\n\ttpt %i\n",Oid,Oip,Otpt);
+		int n=-1;
+        //clean vars
+        Oid=-1;
+        strcpy(Oip,"---.---.---.---");
+        Otpt=-1;
+		if (-1==myrecv(udp_fp,&SC_addr)){			
+			return 0;
+		}
+		if (0!=sscanf(myBuffer,"OK %i;%i;%[^;];%i\n",&n,&Oid,Oip,&Otpt) && n==id){
+			fprintf(stderr,">>Ok!\t(myid: %i ;id2: %i ;ip2: %s ;tpt2: %i)\n",n,Oid,Oip,Otpt);
+			if(n==Oid){
+				fprintf(stderr,"Err! Exists already a ServiceServer with same id\n");
+				return 0;
+			}
 			return 1;
 		}
-		fprintf(stderr,"Err WrongMsg\n");
+		fprintf(stderr,">>Err WrongMsg! (%d %d %s %d)\n",Oid,n,Oip,Otpt);
 		return 0;
 	}
 	void serv_start(){
 		fprintf(stderr,">>Start Exists [%d@%s:%d]\n",Oid,Oip,Otpt);	
+	}
+//client
+	void your_service_ON(struct sockaddr_in addr){
+		mySend("YOUR SERVICE  ON\n",udp_fp,SC_addr);
+	}
+	
+	void your_service_OFF(struct sockaddr_in addr){
+		mySend("YOUR SERVICE  OFF\n",udp_fp,SC_addr);
 	}
 //Exit & Eror
 
@@ -103,10 +135,14 @@
 		}
 		i++;
 	}
+    //reset O var
+
+    strcpy(Oip,"---.---.---.---");
+    Oid=-1;
+    
+    ServX=-1;
 	//check arguments for service
-	#ifdef app_service
 	if(argCheck!=4)myerr(1,"missing arguments");
-	#endif
 	//get CentralServer IP
 	csh = gethostbyname(SName);
 	if (csh==NULL) myerr(2,"Fail to gethostbyname");

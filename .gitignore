@@ -1,0 +1,7 @@
+
+*.h
+*.h
+service
+*.o
+*.o
+GeralCom.o
