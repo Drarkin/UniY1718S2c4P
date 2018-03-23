@@ -182,7 +182,7 @@ int OuroborosTail(int B_fd,struct sockaddr_in *B_addr,int myId){
 		#ifdef debug
 			fprintf(stderr,"[INFO-OuroborosTail] READ: %s\n",msgBuffer);
 		#endif
-		if (6==sscanf(msgBuffer,"TOKEN %i;N;%i;%i.%i.%i.%i;%i",&id2,&ip1,&ip2,&ip3,&ip4,&tpt) ){
+		if (6==sscanf(msgBuffer,"TOKEN %*d;N;%d;%d.%d.%d.%d;%d",&id2,&ip1,&ip2,&ip3,&ip4,&tpt) ){
 			if(ip1<=255 && ip2<=255 && ip3<=255 && ip4<=255){//verifies the correct max for each ip field
 				//Success!
 				sprintf(ip,"%d.%d.%d.%d\0",ip1,ip2,ip3,ip4);
