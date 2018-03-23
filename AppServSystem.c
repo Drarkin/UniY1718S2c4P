@@ -174,6 +174,7 @@
 						AppState.ring=true;
 						AppState.state=joinR;
 						serv_start();
+						Ring_SetA(Oip,Oid,Otpt);
 						JoinRing(ServX,id,ip,tpt);
 						//set next ring address
 						//conect to ring

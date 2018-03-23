@@ -52,7 +52,7 @@ int Ring(int fd2read,struct sockaddr_in *addr,int myId){
 			break;
 		default:
 			#ifdef debug
-				fprintf("[CRITICAL-Ring] OUTSTATE!\n");
+				fprintf(stderr,"[CRITICAL-Ring] OUTSTATE!\n");
 			#endif
 			return -2;
 	}
@@ -67,7 +67,7 @@ int JoinRing(int ServId,int myId,char *myIP,int myPort){
 	int n;
 	if (tcp_fd<0){//in case of bad file descriptor Abort
 		#ifdef debug
-			fprintf("[ERROR-JoinRing] Bad file descriptor!\n");
+			fprintf(stderr,"[ERROR-JoinRing] Bad file descriptor!\n");
 		#endif
 		return tcp_fd;
 	}
@@ -86,7 +86,7 @@ int JoinRing(int ServId,int myId,char *myIP,int myPort){
 		sprintf(msgBuffer,"NEW %d;%s;%d\n",myId,myIP,(short)myPort);
 		n=strlen(msgBuffer);
 		#ifdef debug
-			fprintf("[INFO-JoinRing] Sent{%s:%d}: %s\n",RingInfo.A_IP,RingInfo.A_Port,msgBuffer);
+			fprintf(stderr,"[INFO-JoinRing] Sent{%s:%d}: %s\n",RingInfo.A_IP,RingInfo.A_Port,msgBuffer);
 		#endif
 		//if(0<write(tcp_fd,msgBuffer,strlen(msgBuffer))){
 		if(n==write(tcp_fd,msgBuffer,n)){
@@ -97,7 +97,7 @@ int JoinRing(int ServId,int myId,char *myIP,int myPort){
 		}else{
 			//Failed
 			#ifdef debug
-				fprintf("[ERROR-JoinRing] Failed To Sent, deleting socket!\n");
+				fprintf(stderr,"[ERROR-JoinRing] Failed To Sent, deleting socket!\n");
 			#endif
 			close(tcp_fd);
 			return -1;
@@ -105,12 +105,12 @@ int JoinRing(int ServId,int myId,char *myIP,int myPort){
 	}else{
 		//Failed
 		#ifdef debug
-			fprintf("[ERROR-JoinRing] Failed To connect!\n\tDestAddr: %d@%s:%d\n",ServId,inet_ntoa((*addr).sin_addr),ntohs((*addr).sin_port)));
+			fprintf(stderr,"[ERROR-JoinRing] Failed To connect!\n\tDestAddr: %d@%s:%d\n",ServId,inet_ntoa((*addr).sin_addr),ntohs((*addr).sin_port));
 		#endif
 		return -1;
 	}
 	#ifdef debug
-		fprintf("[CRITICAL-JoinRing] OUTSTATE!\n");
+		fprintf(stderr,"[CRITICAL-JoinRing] OUTSTATE!\n");
 	#endif
 	return -2;
 }
@@ -123,7 +123,7 @@ int JoinRing(int ServId,int myId,char *myIP,int myPort){
 	 int n;
 	 if (tcp_fd<0){//in case of bad file descriptor Abort
 		#ifdef debug
-			fprintf("[ERROR-Ouroboros] Bad file descriptor!\n");
+			fprintf(stderr,"[ERROR-Ouroboros] Bad file descriptor!\n");
 		#endif
 		return tcp_fd;
 	}
@@ -135,7 +135,7 @@ int JoinRing(int ServId,int myId,char *myIP,int myPort){
 			RingInfo.A_Id,RingInfo.A_IP,RingInfo.A_Port);
 		n=strlen(msgBuffer);
 		#ifdef debug
-			fprintf("[INFO-JoinRing] Sent{%s:%d}: %s\n",RingInfo.A_IP,RingInfo.A_Port,msgBuffer);
+			fprintf(stderr,"[INFO-JoinRing] Sent{%s:%d}: %s\n",RingInfo.A_IP,RingInfo.A_Port,msgBuffer);
 		#endif
 		//if(0<write(tcp_fd,msgBuffer,strlen(msgBuffer))){
 		if(n==write(tcp_fd,msgBuffer,n)){
@@ -146,7 +146,7 @@ int JoinRing(int ServId,int myId,char *myIP,int myPort){
 		}else{
 			//Failed
 			#ifdef debug
-				fprintf("[ERROR-Ouroboros] Failed To Sent, deleting socket!\n");
+				fprintf(stderr,"[ERROR-Ouroboros] Failed To Sent, deleting socket!\n");
 			#endif
 			close(tcp_fd);
 			return -1;
@@ -154,12 +154,12 @@ int JoinRing(int ServId,int myId,char *myIP,int myPort){
 	}else{
 		//Failed
 		#ifdef debug
-			fprintf("[ERROR-Ouroboros] Failed To connect!\n\tDestAddr: %d@%s:%d\n",ServId,inet_ntoa((*addr).sin_addr),ntohs((*addr).sin_port)));
+			fprintf(stderr,"[ERROR-Ouroboros] Failed To connect!\n\tDestAddr: %d@%s:%d\n",RingInfo.A_Id,inet_ntoa((*addr).sin_addr),ntohs((*addr).sin_port));
 		#endif
 		return -1;
 	}
 	#ifdef debug
-		fprintf("[CRITICAL-Ouroboros] OUTSTATE!\n");
+		fprintf(stderr,"[CRITICAL-Ouroboros] OUTSTATE!\n");
 	#endif
 	return -2;
 }
@@ -173,14 +173,14 @@ int OuroborosTail(int B_fd,struct sockaddr_in *B_addr,int myId){
 	if (n>0){
 		//Success! Reads Something at least
 		#ifdef debug
-			fprintf("[INFO] READ: %s\n",msgBuffer);
+			fprintf(stderr,"[INFO] READ: %s\n",msgBuffer);
 		#endif
 		if (0!=sscanf(msgBuffer,"TOKEN %i;N;%i;%i.%i.%i.%i;%i\n",&id2,&ip1,&ip2,&ip3,&ip4,&tpt) ){
 			if(ip1<=255 && ip2<=255 && ip3<=255 && ip4<=255){//verifies the correct max for each ip field
 				//Success!
 				sprintf(ip,"%d.%d.%d.%d",ip1,ip2,ip3,ip4);
 				#ifdef debug
-					fprintf("[INFO] DATA: %d -> %d@%s:%d\n",id,id2,ip,tpt);
+					fprintf(stderr,"[INFO] DATA: %d -> %d@%s:%d\n",id,id2,ip,tpt);
 				#endif
 				if (myId=id2){
 						//Correct info
@@ -193,23 +193,23 @@ int OuroborosTail(int B_fd,struct sockaddr_in *B_addr,int myId){
 						//Update Ring State
 						RingInfo.type=duo;
 						#ifdef debug
-							fprintf("[INFO] Ring Created\n",id,id2,ip,tpt);
+							fprintf(stderr,"[INFO] Ring Created\n",id,id2,ip,tpt);
 						#endif
 					}else{
 						#ifdef debug
-							fprintf("[INFO] Ring FAiled! unexpected ID\n",id,id2,ip,tpt);
+							fprintf(stderr,"[INFO] Ring FAiled! unexpected ID\n",id,id2,ip,tpt);
 						#endif
 					}
 			}else{
 				//Fails match
 				#ifdef debug
-					fprintf("[INFO] FAILED! Invalid IPv4\n");
+					fprintf(stderr,"[INFO] FAILED! Invalid IPv4\n");
 				#endif
 			}	
 		}else{
 			//Fails match
 			#ifdef debug
-				fprintf("[INFO] FAILED! Not Recognized\n");
+				fprintf(stderr,"[INFO] FAILED! Not Recognized\n");
 			#endif
 			return 0;
 		}
@@ -232,14 +232,14 @@ int CreateRing(int tcp_fdB,struct sockaddr_in *addr,int myId){
 	if (n>0){
 		//Success! Reads Something at least
 		#ifdef debug
-			fprintf("[INFO] READ: %s\n",msgBuffer);
+			fprintf(stderr,"[INFO] READ: %s\n",msgBuffer);
 		#endif
 		if (0!=sscanf(msgBuffer,"NEW %i;%i.%i.%i.%i;%i\n",&id,&ip1,&ip2,&ip3,&ip4,&tpt) ){
 			if(ip1<=255 && ip2<=255 && ip3<=255 && ip4<=255){//verifies the correct max for each ip field
 				//Success!
 				sprintf(ip,"%d.%d.%d.%d",ip1,ip2,ip3,ip4);
 				#ifdef debug
-					fprintf("[INFO] DATA: %d@%s:%d\n",id,ip,tpt);
+					fprintf(stderr,"[INFO] DATA: %d@%s:%d\n",id,ip,tpt);
 				#endif
 				//in this fucntion we are creating the ring, because of this there will be only two nodes. so A and B data in Ring info are equal
 				RingInfo.after=(*addr);	
@@ -261,13 +261,13 @@ int CreateRing(int tcp_fdB,struct sockaddr_in *addr,int myId){
 			}else{
 				//Fails match
 				#ifdef debug
-					fprintf("[INFO] FAILED! Invalid IPv4\n");
+					fprintf(stderr,"[INFO] FAILED! Invalid IPv4\n");
 				#endif
 			}	
 		}else{
 			//Fails match
 			#ifdef debug
-				fprintf("[INFO] FAILED! Not Recognized\n");
+				fprintf(stderr,"[INFO] FAILED! Not Recognized\n");
 			#endif
 			return 0;
 		}
@@ -276,7 +276,7 @@ int CreateRing(int tcp_fdB,struct sockaddr_in *addr,int myId){
 		return 0;
 	}
 	#ifdef debug
-		fprintf("[CRITICAL-JoinRing] OUTSTATE!\n");
+		fprintf(stderr,"[CRITICAL-JoinRing] OUTSTATE!\n");
 	#endif
 	return -2;
 }
