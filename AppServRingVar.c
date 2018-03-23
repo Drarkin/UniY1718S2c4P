@@ -203,6 +203,7 @@ int OuroborosTail(int B_fd,struct sockaddr_in *B_addr,int myId){
 						#ifdef debug
 							fprintf(stderr,"[INFO-OuroborosTail] Ring Created\n",id,id2,ip,tpt);
 						#endif
+						return B_fd;
 					}else{
 						#ifdef debug
 							fprintf(stderr,"[INFO-OuroborosTail] Ring FAiled! unexpected ID\n",id,id2,ip,tpt);
