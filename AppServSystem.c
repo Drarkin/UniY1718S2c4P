@@ -1,4 +1,5 @@
 #include "AppServSystem.h"
+#include <errno.h>
 	int ReadyState(){
 		if (-1==myrecv(udp_fp,NULL)){	
 			return AppState.state;//do't change state
@@ -104,14 +105,17 @@
 		}
 		return 0;
 	}
-	
-		void appRun(){
+	void appRun(){
+			int intaux;
+			int errnum;
 		//main code for service functionally
 		//wait for new information to be read from any file descriptor and executs the correct answer for that input
 		//enum {ini,idle,busy} state;//state that controls select
 		int fd,newfd,afd;
 		fd_set rfds;
 		int maxfd,counter;
+		struct sockaddr_in tpc_in_Addr;
+		int tpc_in_AddrSize;
 		//Find max value
 		maxfd=(tcp_fd>STDIN)?tcp_fd:STDIN;
 		maxfd=(udp_fp>maxfd)?udp_fp:maxfd;
@@ -121,7 +125,7 @@
 			FD_SET(udp_fp,&rfds);
 			FD_SET(STDIN,&rfds);
 			//FD_SET((int)STDIN,&rfds);//jefc
-			//if(state==busy){FD_SET(afd,&rfds);maxfd=max(maxfd,afd);}
+			if(RingInfo.type!=uno && RingInfo.type!=halfway){FD_SET(afd,&rfds);maxfd=max(maxfd,afd);}
 			
 			counter=select(maxfd+1,&rfds,
 							(fd_set*)NULL,(fd_set*)NULL,(struct timeval *)NULL);				
@@ -132,6 +136,32 @@
 				if(userIns())return;
 			}
 			if (FD_ISSET(tcp_fd,&rfds)){
+				#ifdef debug
+					fprintf(stderr,"[INFO-appRun] Inside of: if( FD_SET(TCP))\n");
+				#endif
+				tpc_in_AddrSize=sizeof(tpc_in_Addr);
+				listen(tcp_fd,myMaxTCP);
+				afd=accept(tcp_fd,(struct sockaddr*)&tpc_in_Addr,&tpc_in_AddrSize);
+				if (afd<0){
+					//Error
+					errnum=errno;
+					#ifdef debug
+						fprintf(stderr,"[INFO-appRun] afd negative (%d)! %s\n",afd,strerror(errnum));
+					#endif
+					
+				}else{
+					intaux=Ring(afd,&tpc_in_Addr,id);
+					#ifdef debug
+						fprintf(stderr,"[INFO-appRun] afd=%d\t Ring=%d\n",afd,intaux);
+					#endif
+					if(intaux<0){
+						//erro
+						#ifdef debug
+							fprintf(stderr,"[INFO-appRun] close afd:%d",afd);
+						#endif
+						close(afd);
+					}
+				}
 			}
 			if (FD_ISSET(udp_fp,&rfds)){
 				switch (AppState.state){
@@ -169,6 +199,8 @@
 						AppState.ring=true;
 						AppState.state=joinR;
 						serv_start();
+						Ring_SetA(Oip,Oid,Otpt);
+						JoinRing(ServX,id,ip,tpt);
 						//set next ring address
 						//conect to ring
 					}
