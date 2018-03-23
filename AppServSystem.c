@@ -117,15 +117,28 @@
 		struct sockaddr_in tpc_in_Addr;
 		int tpc_in_AddrSize;
 		//Find max value
-		maxfd=(tcp_fd>STDIN)?tcp_fd:STDIN;
-		maxfd=(udp_fp>maxfd)?udp_fp:maxfd;
+		maxfd=max(tcp_fd,STDIN);
+		maxfd=max(udp_fp,maxfd);
+		CleanRing ();
 		while(1){
 			FD_ZERO(&rfds);
+		#ifdef AppServRingVar
 			FD_SET(tcp_fd,&rfds);
+		#endif
 			FD_SET(udp_fp,&rfds);
 			FD_SET(STDIN,&rfds);
 			//FD_SET((int)STDIN,&rfds);//jefc
-			if(RingInfo.type!=uno && RingInfo.type!=halfway){FD_SET(afd,&rfds);maxfd=max(maxfd,afd);}
+		#ifdef AppServRingVar
+			maxfd=max(RingInfo.A_fd,maxfd);
+			maxfd=max(RingInfo.B_fd,maxfd);
+			maxfd==max(maxfd,afd);
+			//verify if fd is  valid
+			
+			if(RingInfo.A_fd>-1)FD_SET(RingInfo.A_fd,&rfds);
+			if(RingInfo.B_fd>-1)FD_SET(RingInfo.B_fd,&rfds);
+		#endif
+			
+			
 			
 			counter=select(maxfd+1,&rfds,
 							(fd_set*)NULL,(fd_set*)NULL,(struct timeval *)NULL);				
@@ -134,10 +147,12 @@
 			//put code to read STDIN when input is writen
 			if (FD_ISSET(STDIN,&rfds)){
 				if(userIns())return;
-			}
+			}	
+		#ifdef AppServRingVar
 			if (FD_ISSET(tcp_fd,&rfds)){
+				//NEW TCP connection
 				#ifdef debug
-					fprintf(stderr,"[INFO-appRun] Inside of: if( FD_SET(TCP))\n");
+					fprintf(stderr,"[INFO-appRun] NEW TCP Connection\n");
 				#endif
 				tpc_in_AddrSize=sizeof(tpc_in_Addr);
 				listen(tcp_fd,myMaxTCP);
@@ -163,6 +178,21 @@
 					}
 				}
 			}
+			if (FD_ISSET(RingInfo.B_fd,&rfds)){
+				//NEW TCP Msg
+				#ifdef debug
+					fprintf(stderr,"[INFO-appRun] NEW TCP MSG from previous Server\n");
+				#endif
+				intaux=Ring(afd,&tpc_in_Addr,id);
+				#ifdef debug
+					fprintf(stderr,"[INFO-appRun] Ring=%d\n",intaux);
+				#endif
+			}
+			/*
+			if (FD_ISSET(RingInfo.A_fd,&rfds)){
+				//NEW TCP MSG
+			}/**/
+		#endif
 			if (FD_ISSET(udp_fp,&rfds)){
 				switch (AppState.state){
 					case g_s:

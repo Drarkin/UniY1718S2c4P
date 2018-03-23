@@ -9,19 +9,19 @@
 
 #define GetType 	GetTypeVectorName[RingInfo.type] //indica o tipo do anel
 #define MYIPSIZE 16
-
+#define AppServRingVar
 #define debug
 extern const char *GetTypeVectorName[];
  
 extern struct RingInfoType{	
 	enum{uno,duo,mul,halfway} type;//diz o numero de membros do anel. half means that the ring is passing from uno to duo
 	int B_fd;
-	struct sockaddr_in before;
+	struct sockaddr_in B_addr;
 	char B_IP[MYIPSIZE];
 	int B_Id;
-	int B_Port; //max value of 65535
+	int B_Port; //max value of 65535`
 	int A_fd;
-	struct sockaddr_in after;
+	struct sockaddr_in A_addr;
 	char A_IP[MYIPSIZE];
 	int A_Id;
 	int A_Port; //max value of 65535
@@ -41,6 +41,7 @@ extern struct RingInfoType{
 		   */
 
 //Before using JoinRing, The address of StartServer should already be written into A zone of RingInfo by using Ring_SetA
+void CleanRing ();
 void Ring_SetA(char *A_IP,int A_Id,int A_Port);
 void Ring_SetB(char *B_IP,int B_Id,int B_Port);
 int Ring(int fd2read,struct sockaddr_in *addr,int myId);

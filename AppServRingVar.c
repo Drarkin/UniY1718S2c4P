@@ -10,7 +10,12 @@ const char *GetTypeVectorName[]={"uno","duo","mul","halfway"};
 struct RingInfoType RingInfo;
 
 
-
+void CleanRing (){
+	memset((void*)&RingInfo,(int)'\0',sizeof(RingInfo));
+	RingInfo.A_fd=-1;
+	RingInfo.B_fd=-1;
+	return;
+}
 void Ring_SetA(char *A_IP,int A_Id,int A_Port){
 	//set addr data correctly
 		if (A_Port>65535){
@@ -21,9 +26,9 @@ void Ring_SetA(char *A_IP,int A_Id,int A_Port){
 	strncpy(RingInfo.A_IP,A_IP,16);
 	RingInfo.A_Id=A_Id;
 	RingInfo.A_Port=A_Port;
-	RingInfo.after.sin_family=AF_INET;
-	RingInfo.after.sin_port=htons(A_Port);
-	RingInfo.after.sin_addr.s_addr=inet_addr(A_IP);
+	RingInfo.A_addr.sin_family=AF_INET;
+	RingInfo.A_addr.sin_port=htons(A_Port);
+	RingInfo.A_addr.sin_addr.s_addr=inet_addr(A_IP);
 	}
 void Ring_SetB(char *B_IP,int B_Id,int B_Port){
 	//set addr data correctly
@@ -35,9 +40,9 @@ void Ring_SetB(char *B_IP,int B_Id,int B_Port){
 	strncpy(RingInfo.B_IP,B_IP,MYIPSIZE);
 	RingInfo.B_Id=B_Id;
 	RingInfo.B_Port=B_Port;
-	RingInfo.before.sin_family=AF_INET;
-	RingInfo.before.sin_port=htons(B_Port);
-	RingInfo.before.sin_addr.s_addr=inet_addr(B_IP);
+	RingInfo.B_addr.sin_family=AF_INET;
+	RingInfo.B_addr.sin_port=htons(B_Port);
+	RingInfo.B_addr.sin_addr.s_addr=inet_addr(B_IP);
 	}
 /**/
 int Ring(int fd2read,struct sockaddr_in *addr,int myId){
@@ -65,7 +70,7 @@ int Ring(int fd2read,struct sockaddr_in *addr,int myId){
 }
 int JoinRing(int ServId,int myId,char *myIP,int myPort){
 	//Join a ring or other server to form a ring
-	struct sockaddr_in *addr=&RingInfo.after;
+	struct sockaddr_in *addr=&RingInfo.A_addr;
 	char msgBuffer[RingMsgSize_NEW];//worst msg size plus 1
 	int tcp_fd=socket(AF_INET,SOCK_STREAM,0);
 	int n;
@@ -82,7 +87,7 @@ int JoinRing(int ServId,int myId,char *myIP,int myPort){
 			/**This is called for the new Server, so the addr is from the following server. We save it in A.
 			Later a diferent server will try conect to this one to close the ring, it will be B*/
 		/*//the Addr of A should already be set previous so we can connect using the addr
-		RingInfo.after=(*addr);	
+		RingInfo.A_addr=(*addr);	
 		RingInfo.A_Id=ServId;
 		strncpy(RingInfo.A_IP,inet_ntoa((*addr).sin_addr),16);
 		RingInfo.A_Port=ntohs((*addr).sin_port);/**/
@@ -97,7 +102,7 @@ int JoinRing(int ServId,int myId,char *myIP,int myPort){
 			//Sucess
 			RingInfo.type=halfway;
 			RingInfo.A_fd=tcp_fd;//saves fd
-			return tcp_fd;//retorns the fd of the new conection (type A -  conectes to the server after this one)
+			return tcp_fd;//retorns the fd of the new conection (type A -  conectes to the server A_addr this one)
 		}else{
 			//Failed
 			#ifdef debug
@@ -121,7 +126,7 @@ int JoinRing(int ServId,int myId,char *myIP,int myPort){
 
  int OuroborosHead(int myId){
 	 //Finish ring creation by conect end to start
-	 struct sockaddr_in *addr=&RingInfo.after;
+	 struct sockaddr_in *addr=&RingInfo.A_addr;
 	 char msgBuffer[RingMsgSize_TOKEN];//worst msg size plus 1
 	 int tcp_fd=socket(AF_INET,SOCK_STREAM,0);
 	 int n;
@@ -145,11 +150,11 @@ int JoinRing(int ServId,int myId,char *myIP,int myPort){
 		if(n==write(tcp_fd,msgBuffer,n)){
 			//Sucess
 			#ifdef debug
-				fprintf(stderr,"[INFO-OuroborosHead] Ouroboros Completed!");
+				fprintf(stderr,"[INFO-OuroborosHead] Ouroboros Completed!\n");
 			#endif
 			RingInfo.type=duo;
 			RingInfo.A_fd=tcp_fd;//saves fd
-			return tcp_fd;//retorns the fd of the new conection (type A -  conectes to the server after this one)
+			return tcp_fd;//retorns the fd of the new conection (type A -  conectes to the server A_addr this one)
 		}else{
 			//Failed
 			#ifdef debug
@@ -194,7 +199,7 @@ int OuroborosTail(int B_fd,struct sockaddr_in *B_addr,int myId){
 						//update B data
 						//Wrong info because source addr change when packages moves in network
 						RingInfo.B_fd=B_fd;
-						RingInfo.before=(*B_addr);
+						RingInfo.B_addr=(*B_addr);
 						RingInfo.B_Id=id2;
 						strncpy(RingInfo.B_IP,inet_ntoa((*B_addr).sin_addr),16);
 						RingInfo.B_Port=ntohs((*B_addr).sin_port);
@@ -225,7 +230,10 @@ int OuroborosTail(int B_fd,struct sockaddr_in *B_addr,int myId){
 			return -1;
 		}
 	}else{
-		//fails to read
+		//failure to read
+		#ifdef debug
+			fprintf(stderr,"[INFO-OuroborosTail] FAILED! fail read\n");
+		#endif
 		return -1;
 	}
 	
@@ -235,7 +243,7 @@ int OuroborosTail(int B_fd,struct sockaddr_in *B_addr,int myId){
 	return -1;	
 }
 int CreateRing(int tcp_fdB,struct sockaddr_in *addr,int myId){
-	//finalizes ring creation if there wasn't a ring before: RingInfo.type==uno (ring made by one server)
+	//finalizes ring creation if there wasn't a ring B_addr: RingInfo.type==uno (ring made by one server)
 	//Args fd of conection 
 	// addr address from source 
 	int n;
@@ -265,11 +273,11 @@ int CreateRing(int tcp_fdB,struct sockaddr_in *addr,int myId){
 				#endif
 				//in this fucntion we are creating the ring, because of this there will be only two nodes. so A and B data in Ring info are equal
 				/*FAILS because source addr is changed when packages move in the network
-				RingInfo.after=(*addr);	
+				RingInfo.A_addr=(*addr);	
 				RingInfo.A_Id=id;
 				strncpy(RingInfo.A_IP,inet_ntoa((*addr).sin_addr),16);
 				RingInfo.A_Port=ntohs((*addr).sin_port);/**/
-				/*RingInfo.before=(*addr);	
+				/*RingInfo.B_addr=(*addr);	
 				RingInfo.B_Id=id;
 				strncpy(RingInfo.B_IP,inet_ntoa((*addr).sin_addr),16);
 				RingInfo.B_Port=ntohs((*addr).sin_port);/**/
