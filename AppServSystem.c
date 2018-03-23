@@ -112,6 +112,8 @@
 		int fd,newfd,afd;
 		fd_set rfds;
 		int maxfd,counter;
+		struct sockaddr_in tpc_in_Addr;
+		int tpc_in_AddrSize;
 		//Find max value
 		maxfd=(tcp_fd>STDIN)?tcp_fd:STDIN;
 		maxfd=(udp_fp>maxfd)?udp_fp:maxfd;
@@ -121,7 +123,7 @@
 			FD_SET(udp_fp,&rfds);
 			FD_SET(STDIN,&rfds);
 			//FD_SET((int)STDIN,&rfds);//jefc
-			//if(state==busy){FD_SET(afd,&rfds);maxfd=max(maxfd,afd);}
+			if(RingInfo.type!=uno){FD_SET(afd,&rfds);maxfd=max(maxfd,afd);}
 			
 			counter=select(maxfd+1,&rfds,
 							(fd_set*)NULL,(fd_set*)NULL,(struct timeval *)NULL);				
@@ -132,6 +134,9 @@
 				if(userIns())return;
 			}
 			if (FD_ISSET(tcp_fd,&rfds)){
+				tpc_in_AddrSize=sizeof(tpc_in_Addr);
+				 afd=accept(fd,(struct sockaddr*)&tpc_in_Addr,&tpc_in_AddrSize);
+				 Ring(afd,&tpc_in_Addr,id);
 			}
 			if (FD_ISSET(udp_fp,&rfds)){
 				switch (AppState.state){
@@ -169,6 +174,7 @@
 						AppState.ring=true;
 						AppState.state=joinR;
 						serv_start();
+						JoinRing(ServX,id,ip,tpt);
 						//set next ring address
 						//conect to ring
 					}

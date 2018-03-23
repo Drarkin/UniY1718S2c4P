@@ -1,3 +1,5 @@
+/**MADE BY DRARKIN**/
+
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -7,6 +9,8 @@
 
 #define GetType 	GetTypeVectorName[RingInfo.type] //indica o tipo do anel
 #define MYIPSIZE 16
+
+#define debug
 extern const char *GetTypeVectorName[];
  
 extern struct RingInfoType{	
@@ -38,9 +42,10 @@ extern struct RingInfoType{
 
 //Before using JoinRing, The address of StartServer should already be written into A zone of RingInfo by using Ring_SetA
 void Ring_SetA(char *A_IP,int A_Id,int A_Port);
+void Ring_SetB(char *B_IP,int B_Id,int B_Port);
+int Ring(int fd2read,struct sockaddr_in *addr,int myId);
 int OuroborosHead(int myId);
 int OuroborosTail(int B_fd,struct sockaddr_in *B_addr,int myId);
-void Ring_SetB(char *B_IP,int B_Id,int B_Port);
 int JoinRing(int ServId,int myId,char *myIP,int myPort);
 int CreateRing(int tcp_fdB,struct sockaddr_in *addr,int myId);
    
