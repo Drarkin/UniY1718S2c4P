@@ -142,9 +142,6 @@
 			if(RingInfo.B_fd>-1)FD_SET(RingInfo.B_fd,&rfds);
 			if(afd>-1)FD_SET(RingInfo.B_fd,&rfds);
 		#endif
-			
-			
-			
 			counter=select(maxfd+1,&rfds,
 							(fd_set*)NULL,(fd_set*)NULL,(struct timeval *)NULL);				
 			if (counter<=0)myerr(158,"Failed in appRun()");

@@ -98,6 +98,11 @@
 	void myfpClose(){
 		if (udp_fp>=0){ close(udp_fp);udp_fp=-1;}
 		if (tcp_fd>=0){ close(tcp_fd);tcp_fd=-1;}
+		#ifdef AppServRingVar
+		if (RingInfo.A_fd>=0){ close(RingInfo.A_fd);RingInfo.A_fd=-1;}
+		if (RingInfo.B_fd>=0){ close(RingInfo.B_fd);RingInfo.B_fd=-1;}
+		
+		#endif
 		return;
 	}	
 //Start SetUp
