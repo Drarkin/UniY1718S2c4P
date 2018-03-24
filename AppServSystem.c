@@ -200,6 +200,7 @@
 				#ifdef debug
 					fprintf(stderr,"[INFO-appRun] NEW TCP MSG from previous Server (fd:%d)\n",RingInfo.B_fd);
 				#endif
+				RingReadMSG();
 				intaux=Ring(afd,&tpc_in_Addr,id,AppState.ss);//id means id of this server
 				#ifdef debug
 					fprintf(stderr,"[INFO-appRun] Ring=%d\n",intaux);

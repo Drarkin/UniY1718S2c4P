@@ -9,6 +9,7 @@
 
 #define GetType 	GetTypeVectorName[RingInfo.type] //indica o tipo do anel
 #define MYIPSIZE 16
+#define RingMsgSize_MAX 100//72
 #define AppServRingVar
 #define debug
 #define ErrRingIngnore -1
@@ -16,7 +17,7 @@
 #define ErrRingB -2
 #define ErrRingNewfd -4
 extern const char *GetTypeVectorName[];
- 
+extern char RingMsgBuffer[RingMsgSize_MAX];
 extern struct RingInfoType{	
 	enum{uno,duo,mul,halfway} type;//diz o numero de membros do anel. half means that the ring is passing from uno to duo
 	int B_fd;
@@ -55,5 +56,6 @@ int OuroborosTail(int B_fd,struct sockaddr_in *B_addr,int myId);
 int JoinRing(int ServId,int myId,char *myIP,int myPort);
 int CreateRing(int tcp_fdB,struct sockaddr_in *addr,int myId);
 int NewServer(int tcp_fdB,int myID);
+char *RingReadMSG();
 int RingToken(int myId);
    
