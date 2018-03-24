@@ -13,6 +13,10 @@
 			}
 			if (AppState.ring){
 				//in ring pass to next ds
+				withdraw_ds(ServX);
+				bufferclean();//Reset burffer data
+				sprintf(myBuffer,"NEW_DS\0");//prevent buffer overflow
+				RingMsgPidgeon(myBuffer);
 			}else{
 				//alone
 				printf(">>Busy on client (%s:%d)\n",inet_ntoa(C_addr.sin_addr),C_addr.sin_port);
@@ -50,28 +54,8 @@
 		}
 		return AppState.state;//do't change state
 	}
-	
-	int userIns(){
-		//reads user input from stdin and calls the correct function to execut user command
-		int intaux;
-		bufferclean();//Reset burffer data
-		intaux=read(STDIN,myBuffer,buffersize-1);//prevent buffer overflow
-		/*prevent loopbug*/
-		if (intaux<=0) {getchar();return 0;}
-		if (myScmp("q")||myScmp("l")||myScmp("quit")||myScmp("leave")||myScmp("exit")){
-			if myScmp("exit") 
-				if (!(AppState.ds || AppState.ss || AppState.ring))return 1;
-				else fprintf(stderr,"still conectect!\n");
-			if (AppState.ds==true){
-				withdraw_ds(ServX);
-			}
-			if (AppState.ss==true){
-				withdraw_start(ServX);
-				#ifdef AppServRingVar
-					RingMsgPidgeon("NEW START\n\0");
-				#endif
-			}
-            //Reset StartServerInfo O vars
+	void AppReset(){
+		//Reset StartServerInfo O vars
             strcpy(Oip,"---.---.---.---");
             Oid=-1;
 			Otpt=-1;
@@ -79,6 +63,31 @@
             printf(">QUIT\n");
 			AppState.ring=false;
 			AppState.state=nready;
+	}
+	int userIns(){
+		//reads user input from stdin and calls the correct function to execut user command
+		int intaux;
+		bufferclean();//Reset burffer data
+		intaux=read(STDIN,myBuffer,buffersize-1);//prevent buffer overflow
+		/*prevent loopbug*/
+		if (intaux<=0) {getchar();return 0;}
+		if (myScmp("q")||myScmp("quit")||myScmp("exit")){
+			if myScmp("exit") 
+				if (!(AppState.ds || AppState.ss || AppState.ring))return 1;
+				else fprintf(stderr,"still conectect!\n");
+			if(AppState.ring==0){
+				if (AppState.ds==true){
+					withdraw_ds(ServX);
+				}
+				if (AppState.ss==true){
+					withdraw_start(ServX);
+					#ifdef AppServRingVar
+						RingMsgPidgeon("NEW START\n\0");
+					#endif
+				}
+				AppReset();
+			}else fprintf(stderr,"[WARNING-userIns] LEave the ring first!\n");
+				
 		}else if(myScmp("join")){
 			if (AppState.state==nready){
 				//entrar no anel do serviço x
@@ -89,6 +98,34 @@
 			}else{
 				fprintf(stderr,">>Can't Join Now! Already joined ServX:%d\n`\n\tUse \"Force w_ss\" to frocefull remove the service\n",ServX);
 			}
+		}else if(myScmp("l")||myScmp("leave")){
+			#ifdef AppServRingVar
+			fprintf(stderr,">START LEAVE!\n");
+			if (AppState.ss){
+				withdraw_start(ServX);
+				bufferclean();//Reset burffer data
+				sprintf(myBuffer,"NEW_START\0");//prevent buffer overflow
+				RingMsgPidgeon(myBuffer);
+			}
+			if (AppState.ds){
+				withdraw_ds(ServX);
+				bufferclean();//Reset burffer data
+				sprintf(myBuffer,"NEW_DS\0");//prevent buffer overflow
+				RingMsgPidgeon(myBuffer);
+			}	
+			if (AppState.ring){		
+				bufferclean();//Reset burffer data
+				sprintf(myBuffer,"TOKEN %d;O;%d;%s%d;\0",id,RingInfo.A_Id,RingInfo.A_IP,RingInfo.A_Port);//prevent buffer overflow
+				RingMsgPidgeon(myBuffer);
+				//clean state to ini
+				close(RingInfo.A_fd);RingInfo.A_fd=-1;
+				close(RingInfo.B_fd);RingInfo.B_fd=-1;
+				CleanRing ();
+			}
+			AppReset();
+			#endif
+				
+			
 		}else if(myScmp("show_state")){
 			printf(">ServerState:\n\tmyID:%i;\n\tServX:%i;\n\tstartS: %d@%s:%d\n\t%s (ss: %i  /  ds: %i / ring: %i)\n",id,ServX,
                    Oid,Oip,Otpt,
@@ -98,10 +135,6 @@
 			printf(">RingInfo-NodeB: (fd=%d) %d@%s:%d\n",RingInfo.B_fd,RingInfo.B_Id,RingInfo.B_IP,RingInfo.B_Port);
 		#endif
 			//print state
-		}else if (myScmp("leave")){
-			//saida do servidor do anel
-		}else if myScmp("set_ds"){
-			fprintf(stderr,">>SET_DS!\n");
 		}else if myScmp("Force w_ss"){
 			fprintf(stderr,">>Force W_SS!\n");
 			withdraw_start(ServX);

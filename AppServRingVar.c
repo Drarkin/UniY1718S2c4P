@@ -165,7 +165,63 @@ int JoinRing(int ServId,int myId,char *myIP,int myPort){
 	#endif
 	return -2;
 }
-
+int RingLeave(int myId){
+	/*iIn this function we will close the ring again, after the sucessor of this node leave the ring
+	first we will test if the node leaving is the sucessor of this node, 
+		if it is the successor we will do something like joinRing,*/
+		int n;
+	int B_fd=RingInfo.B_fd;//read from previous ringNode
+	int msgSize;
+	struct RingInfoType RingInfoBackup;
+	int id,type,id2,ip1,ip2,ip3,ip4,tpt;
+	char ip[MYIPSIZE]="---.---.---.---";
+	char *msgBuffer=RingMsgBuffer;//change msgBuffer to RingMSgBuffer
+	n=sscanf(RingMsgBuffer,"TOKEN %d;%c;%d;%d.%d.%d.%d;%d",&id,&type,&id2,&ip1,&ip2,&ip3,&ip4,&tpt);
+	if (n!=8) return ErrRingIngnore;
+	if(ip1<=255 && ip2<=255 && ip3<=255 && ip4<=255){
+		if (id==RingInfo.A_Id &&id==RingInfo.B_Id){
+				//ring dismantled
+				close(RingInfo.B_fd);
+				close(RingInfo.A_fd);
+				CleanRing ();
+				return ErrRingIngnore;
+			}
+		if(id==RingInfo.A_Id){//my sucessor is leaving
+			sprintf(ip,"%d.%d.%d.%d\0",ip1,ip2,ip3,ip4);
+			close(RingInfo.A_fd);RingInfo.A_fd=-1;
+			Ring_SetA(ip,id2,tpt);
+			if(0>OuroborosHead(myId)){
+				//FAilure to connect with Sucessor
+				return ErrRingA;
+			}else{
+				//Sucess to connect with new Server
+				#ifdef debug
+					fprintf(stderr,"[INFO-RingToken] Success to conect to Successor server\n",RingInfo.A_IP,RingInfo.A_Port,msgBuffer);
+				#endif
+				if (ErrRingA==RingMsgPidgeon(msgBuffer))
+					return ErrRingNoRing;//should be critical no node before
+				RingInfo.type=uno;
+				return RingInfo.A_fd;
+			}
+		}else if(id==RingInfo.B_Id){// previous node is leaving
+			close(RingInfo.B_fd);RingInfo.B_fd=-1;
+			RingInfo.type=halfway;
+			return RingInfo.A_fd;
+			
+		}else{
+			//Continue to pass the msg
+			return RingMsgPidgeon(msgBuffer);
+		}	
+	}else{
+		//Fails match
+		#ifdef debug
+			fprintf(stderr,"[ERROR-RingInsert] FAILED! Invalid IPv4: %d.%d.%d.%d\n",ip1,ip2,ip3,ip4);
+		#endif
+		return -1;
+	}	
+		
+	
+}
  int OuroborosHead(int myId){
 	 //return positive in case of success
 	 //Finish ring creation by conect end to start
@@ -316,16 +372,6 @@ int CreateRing(int tcp_fdB,struct sockaddr_in *addr,int myId){
 					fprintf(stderr,"[INFO-CreateRing] DATA: %d@%s:%d\n",id,ip,tpt);
 				#endif
 				//in this fucntion we are creating the ring, because of this there will be only two nodes. so A and B data in Ring info are equal
-				/*FAILS because source addr is changed when packages move in the network
-				RingInfo.A_addr=(*addr);	
-				RingInfo.A_Id=id;
-				strncpy(RingInfo.A_IP,inet_ntoa((*addr).sin_addr),16);
-				RingInfo.A_Port=ntohs((*addr).sin_port);/**/
-				/*RingInfo.B_addr=(*addr);	
-				RingInfo.B_Id=id;
-				strncpy(RingInfo.B_IP,inet_ntoa((*addr).sin_addr),16);
-				RingInfo.B_Port=ntohs((*addr).sin_port);/**/
-				
 				Ring_SetA(ip,id,tpt);
 				Ring_SetB(ip,id,tpt);
 				//Now we will finish the ring  by conect to the other node
@@ -555,10 +601,10 @@ char* RingReadMSG(){
 		return RingMsgBuffer;
 	}else{
 		#ifdef debug
-			fprintf(stderr,"\n[INFO-RingReadMSG] Failed To read! Close B_fd: %d",RingInfo.B_fd);
+			fprintf(stderr,"\n[INFO-RingReadMSG] Failed To read! Close B_fd: %d\n",RingInfo.B_fd);
 		#endif
 		close(RingInfo.B_fd);
-		RingInfo.B_fd=1;
+		RingInfo.B_fd=-1;
 		return NULL;
 	}
 }
@@ -581,6 +627,9 @@ int RingToken(int myId){
 		switch(type){
 			case 'N':
 				return RingInsert( myId);
+				break;
+			case 'O':
+				return RingLeave(myId);
 				break;
 			default:
 				return RingMsgPidgeon(RingMsgBuffer);

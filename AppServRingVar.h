@@ -16,6 +16,7 @@
 #define ErrRingA -3
 #define ErrRingB -2
 #define ErrRingNewfd -4
+#define ErrRingNoRing -5
 extern const char *GetTypeVectorName[];
 extern char RingMsgBuffer[RingMsgSize_MAX];
 extern struct RingInfoType{	
