@@ -9,6 +9,7 @@
 const char *GetTypeVectorName[]={"uno","duo","mul","halfway"};
 struct RingInfoType RingInfo;
 char RingMsgBuffer[RingMsgSize_MAX];
+char TOKEN;
 
 void CleanRing (){
 	memset((void*)&RingInfo,(int)'\0',sizeof(RingInfo));
@@ -16,6 +17,8 @@ void CleanRing (){
 	RingInfo.B_fd=-1;
 	return;
 }
+
+/**Set Addr in RingInfo*/
 void Ring_SetA(char *A_IP,int A_Id,int A_Port){
 	//set addr data correctly
 		if (A_Port>65535){
@@ -45,7 +48,7 @@ void Ring_SetB(char *B_IP,int B_Id,int B_Port){
 	RingInfo.B_addr.sin_addr.s_addr=inet_addr(B_IP);
 	}
 /**/
-
+/**Send MSG to next ring member*/
 int RingMsgPidgeon(char *msg){
 //Continue to pass the msg
 	int size;
@@ -69,6 +72,7 @@ int RingMsgPidgeon(char *msg){
 		return ErrRingA;//
 	}
 }
+/**MAnage rings members */
 int Ring(int fd2read,struct sockaddr_in *addr,int myId,int StartServer){
 	/*
 		-1 ignore
@@ -82,16 +86,14 @@ int Ring(int fd2read,struct sockaddr_in *addr,int myId,int StartServer){
 		//read message from unknown
 	switch (RingInfo.type){
 		case uno:
-			if (StartServer)
-				return CreateRing(fd2read,addr,myId);;
+			if (StartServer)return CreateRing(fd2read,addr,myId);;
 			break;
 		case halfway:
 			return OuroborosTail(fd2read,addr,myId);
 			break;
 		case duo:
 		case mul:
-			if (StartServer)
-				return NewServer(fd2read,myId);
+			if (StartServer)return NewServer(fd2read,myId);
 			break;
 		default:
 			#ifdef debug
@@ -106,7 +108,7 @@ int Ring(int fd2read,struct sockaddr_in *addr,int myId,int StartServer){
 	
 }
 int JoinRing(int ServId,int myId,char *myIP,int myPort){
-	//Join a ring or other server to form a ring
+	//Join a ring (or other server) to form a (new) ring
 	/*
 	Before using this function, it's necessary to use:
 		Ring_SetA(Taerget_STR_ip,int_id,int_Otpt);
@@ -338,7 +340,7 @@ int OuroborosTail(int B_fd,struct sockaddr_in *B_addr,int myId){
 	return -1;	
 }
 int CreateRing(int tcp_fdB,struct sockaddr_in *addr,int myId){
-	//finalizes ring creation if there wasn't a ring B_addr: RingInfo.type==uno (ring made by one server)
+	/**Creates a ring case there wansn't a Ring before*/
 	//Args fd of conection 
 	// addr address from source 
 	int n;
@@ -348,14 +350,7 @@ int CreateRing(int tcp_fdB,struct sockaddr_in *addr,int myId){
 	char msgBuffer[RingMsgSize_NEW];//worst msg size plus 1 
 	n=read(tcp_fdB,msgBuffer,RingMsgSize_NEW);
 	if (n>0){
-		//set str end
-		/*for (n=0;n<RingMsgSize_NEW;n++){
-			if(msgBuffer[n]=='\n'){
-				msgBuffer[n+1]=='\0';
-				n=RingMsgSize_NEW;//break cycle;
-			}
-		}/**/
-		//Success! Reads Something at least
+				//Success! Reads Something at least
 		#ifdef debug
 			fprintf(stderr,"[INFO-CreateRing] READ: %s\n",msgBuffer);
 		#endif
@@ -628,6 +623,7 @@ int RingToken(int myId){
 			case 'M':break;
 			default: return ErrRingIngnore;//ignore mensagens nao programadas
 		}
+		TOKEN=type;//allows external code to see what was the type of token
 		if(id==myId)return ErrRingIngnore;//nao renvia mensagens prorpias
 		return RingMsgPidgeon(RingMsgBuffer);
 	}else{

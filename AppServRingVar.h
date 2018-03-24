@@ -28,6 +28,7 @@
 #define ErrRingNoRing -5
 extern const char *GetTypeVectorName[];
 extern char RingMsgBuffer[RingMsgSize_MAX];
+extern char TOKEN;
 extern struct RingInfoType{	
 	enum{uno,duo,mul,halfway} type;//diz o numero de membros do anel. half means that the ring is passing from uno to duo
 	int B_fd;
