@@ -50,7 +50,7 @@
 		}
 		return AppState.state;//do't change state
 	}
-
+	
 	int userIns(){
 		//reads user input from stdin and calls the correct function to execut user command
 		int intaux;
@@ -68,7 +68,7 @@
 			if (AppState.ss==true){
 				withdraw_start(ServX);
 				#ifdef AppServRingVar
-					
+					RingMsgPidgeon("NEW START\n\0");
 				#endif
 			}
             //Reset StartServerInfo O vars
@@ -106,6 +106,12 @@
 			fprintf(stderr,">>Force W_SS!\n");
 			withdraw_start(ServX);
 			ServX=-1;
+		}else if myScmp("teste"){
+			#ifdef AppServRingVar
+				bufferclean();//Reset burffer data
+				sprintf(myBuffer,"TOKEN %d;M\n\0",id);//prevent buffer overflow
+				RingMsgPidgeon(myBuffer);
+			#endif
 		}else{
 			fprintf(stdout,"Unknow Command!\n");
 			fflush(stdout);
@@ -140,7 +146,6 @@
 			maxfd=max(RingInfo.B_fd,maxfd);
 			maxfd==max(maxfd,afd);
 			//verify if fd is  valid
-			
 			if(RingInfo.A_fd>-1)FD_SET(RingInfo.A_fd,&rfds);
 			if(RingInfo.B_fd>-1)FD_SET(RingInfo.B_fd,&rfds);
 			if(afd>-1)FD_SET(RingInfo.B_fd,&rfds);
@@ -148,12 +153,12 @@
 			counter=select(maxfd+1,&rfds,
 							(fd_set*)NULL,(fd_set*)NULL,(struct timeval *)NULL);				
 			if (counter<=0)myerr(158,"Failed in appRun()");
-			
 			//put code to read STDIN when input is writen
 			if (FD_ISSET(STDIN,&rfds)){
 				if(userIns())return;
 			}	
 		#ifdef AppServRingVar
+			#ifdef AppServRingVar
 			if (FD_ISSET(tcp_fd,&rfds)){
 				//NEW TCP connection
 				#ifdef debug
@@ -170,7 +175,7 @@
 					#endif
 					
 				}else{
-					intaux=Ring(afd,&tpc_in_Addr,id);
+					intaux=Ring(afd,&tpc_in_Addr,id,AppState.ss);//id means id of this server
 					#ifdef debug
 						fprintf(stderr,"[INFO-appRun] afd=%d\t Ring:%d\n",afd,intaux);
 					#endif
@@ -196,34 +201,33 @@
 				#ifdef debug
 					fprintf(stderr,"[INFO-appRun] NEW TCP MSG from previous Server (fd:%d)\n",RingInfo.B_fd);
 				#endif
-				intaux=Ring(afd,&tpc_in_Addr,id);
+				intaux=Ring(afd,&tpc_in_Addr,id,AppState.ss);//id means id of this server
 				#ifdef debug
 					fprintf(stderr,"[INFO-appRun] Ring=%d\n",intaux);
 				#endif
-				if(intaux<0){
+				//conection error. close broken connections
+				if(intaux<ErrRingB){
 					//erro
 					#ifdef debug
 						fprintf(stderr,"[ERROR-appRun]close B_fd:%d\n",RingInfo.B_fd);
 					#endif
 					close(RingInfo.B_fd);
 					RingInfo.B_fd=-1;
-					AppState.ring=-1;
-					if(AppState.ss){
-						//perdendo a conecção com o resto do anel, destroi-se o nael e volta ao estado de solo
-						RingInfo.type=uno;
-						if (RingInfo.A_fd>-1){
-							close(RingInfo.A_fd);
-							RingInfo.A_fd=-1;
-						}
-						CleanRing();
-						AppState.ring=0;
-					}
+				}
+				if(intaux<ErrRingA){
+					//erro
+					#ifdef debug
+						fprintf(stderr,"[ERROR-appRun]close A_fd:%d\n",RingInfo.A_fd);
+					#endif
+					close(RingInfo.A_fd);
+					RingInfo.A_fd=-1;
 				}
 			}
 			/*
 			if (FD_ISSET(RingInfo.A_fd,&rfds)){
 				//NEW TCP MSG
 			}/**/
+		#endif//
 		#endif
 			if (FD_ISSET(udp_fp,&rfds)){
 				switch (AppState.state){
@@ -278,6 +282,12 @@
 					AppState.state=s_ds;
 					break;
 				default: break;	
+			}
+			//case all conections to ring are broken
+			if(RingInfo.A_fd==RingInfo.B_fd){
+					AppState.ring=-1;
+					RingInfo.type=uno;
+					CleanRing();
 			}
 		}
 	}

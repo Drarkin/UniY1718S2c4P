@@ -14,6 +14,7 @@
 #define ErrRingIngnore -1
 #define ErrRingA -3
 #define ErrRingB -2
+#define ErrRingNewfd -4
 extern const char *GetTypeVectorName[];
  
 extern struct RingInfoType{	
@@ -48,7 +49,7 @@ void CleanRing ();
 int RingMsgPidgeon(char *msg);
 void Ring_SetA(char *A_IP,int A_Id,int A_Port);
 void Ring_SetB(char *B_IP,int B_Id,int B_Port);
-int Ring(int fd2read,struct sockaddr_in *addr,int myId);
+int Ring(int fd2read,struct sockaddr_in *addr,int myId,int StartServer);
 int OuroborosHead(int myId);
 int OuroborosTail(int B_fd,struct sockaddr_in *B_addr,int myId);
 int JoinRing(int ServId,int myId,char *myIP,int myPort);

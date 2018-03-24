@@ -69,7 +69,7 @@ int RingMsgPidgeon(char *msg){
 		return ErrRingA;//
 	}
 }
-int Ring(int fd2read,struct sockaddr_in *addr,int myId){
+int Ring(int fd2read,struct sockaddr_in *addr,int myId,int StartServer){
 	/*
 		-1 ignore
 		-2 close B
@@ -79,26 +79,32 @@ int Ring(int fd2read,struct sockaddr_in *addr,int myId){
 		//read msg fromring member
 		return RingToken(myId);
 	}
-	//read message from unknown
+		//read message from unknown
 	switch (RingInfo.type){
 		case uno:
-			return CreateRing(fd2read,addr,myId);
+			if (StartServer)
+				return CreateRing(fd2read,addr,myId);;
 			break;
 		case halfway:
 			return OuroborosTail(fd2read,addr,myId);
 			break;
 		case duo:
 		case mul:
-			return NewServer(fd2read,myId);
+			if (StartServer)
+				return NewServer(fd2read,myId);
 			break;
 		default:
 			#ifdef debug
 				fprintf(stderr,"[CRITICAL-Ring] OUTSTATE!\n");
 			#endif
-			return -2;
+			return ErrRingNewfd; //close connectiond that don't belong to a state
 	}
-	close(fd2read);//this to close connections for states that aren't implemented yet
-	return -1;
+		
+	#ifdef debug
+		fprintf(stderr,"[WARNING-Ring] nothing to do!\n");
+	#endif
+	return ErrRingIngnore -1;
+	
 }
 int JoinRing(int ServId,int myId,char *myIP,int myPort){
 	//Join a ring or other server to form a ring
@@ -566,14 +572,14 @@ int RingToken(int myId){
 			#ifdef debug
 				fprintf(stderr,"[INFO-RingToken] FAILED! Not Recognized\n");
 			#endif
-			return -1;
+			return ErrRingIngnore;
 		}
 	}else{
 		//failure to read
 		#ifdef debug
 			fprintf(stderr,"[INFO-RingToken] FAILED! fail read\n");
 		#endif
-		return -1;
+		return ErrRingB;
 	}
 	
 	#ifdef debug
