@@ -45,11 +45,39 @@ void Ring_SetB(char *B_IP,int B_Id,int B_Port){
 	RingInfo.B_addr.sin_addr.s_addr=inet_addr(B_IP);
 	}
 /**/
+
+int RingMsgPidgeon(char *msg,int size){
+//Continue to pass the msg
+	int msgSize;
+	#ifdef debug
+	fprintf(stderr,"[INFO-Pidgeon] Sent{%d@%s:%d}: ",RingInfo.A_Id,RingInfo.A_IP,RingInfo.A_Port);
+	#endif
+	msgSize=write(RingInfo.A_fd,msg,size);
+	if(msgSize==size){
+		//Success
+		#ifdef debug
+		fprintf(stderr,"%s\n",msg);
+		#endif
+		return RingInfo.A_fd;
+	}else{
+		//Failed
+		#ifdef debug
+			fprintf(stderr,"\n[ERROR-Pidgeon] Failed To Send! (%d=%d)\n",msgSize,size);
+		#endif
+		return ErrRingA;//
+	}
+}
 int Ring(int fd2read,struct sockaddr_in *addr,int myId){
+	/*
+		-1 ignore
+		-2 close B
+		-3 close A
+	*/
 	if(fd2read==RingInfo.B_fd){
-		//read msg fromring
+		//read msg fromring member
 		return RingToken(myId);
 	}
+	//read message from unknown
 	switch (RingInfo.type){
 		case uno:
 			return CreateRing(fd2read,addr,myId);
@@ -139,6 +167,10 @@ int JoinRing(int ServId,int myId,char *myIP,int myPort){
 		#endif
 		return tcp_fd;//negative
 	}
+	
+	#ifdef debug
+		fprintf(stderr,"[INFO-OuroborosHead] Sent{%d@%s:%d}: ",RingInfo.A_Id,RingInfo.A_IP,RingInfo.A_Port);
+	#endif
 	if(0==connect(tcp_fd,(struct sockaddr*)addr,sizeof(*addr))){
 		//Sucess
 		//send msg to NewServer
@@ -150,7 +182,7 @@ int JoinRing(int ServId,int myId,char *myIP,int myPort){
 		if(n==write(tcp_fd,msgBuffer,n)){
 			//Sucess
 			#ifdef debug
-				fprintf(stderr,"[INFO-OuroborosHead] Sent{%s:%d}: %s\n",RingInfo.A_IP,RingInfo.A_Port,msgBuffer);
+				fprintf(stderr,"%s\n",msgBuffer);
 			#endif
 			RingInfo.type=duo;
 			RingInfo.A_fd=tcp_fd;//saves fd
@@ -158,7 +190,7 @@ int JoinRing(int ServId,int myId,char *myIP,int myPort){
 		}else{
 			//Failed
 			#ifdef debug
-				fprintf(stderr,"[ERROR-OuroborosHead] Failed To Sent, deleting socket!\n");
+				fprintf(stderr,"\n[ERROR-OuroborosHead] Failed To Sent, deleting socket!\n");
 			#endif
 			close(tcp_fd);
 			return -1;
@@ -344,7 +376,6 @@ int NewServer(int tcp_fdB,int myID){
 				#ifdef debug
 					fprintf(stderr,"[INFO-NewServer] DATA: %d@%s:%d\n",id,ip,tpt);
 				#endif
-				Ring_SetB(ip,id,tpt);
 				//Warn ring of new member
 				//Start pass token
 				sprintf(msgBuffer,"TOKEN %d;N;%d;%s;%d\n",myID,id,ip,tpt);
@@ -361,14 +392,15 @@ int NewServer(int tcp_fdB,int myID){
 							fprintf(stderr,"[INFO-NewServer] Recv: %s\n",msgBuffer);
 						#endif
 						sscanf(msgBuffer,"TOKEN %d;K;%d;%d.%d.%d.%d;%d\n\0",&BId,&Nid,&Nip1,&Nip2,&Nip3,&Nip4,&Ntpt);
-						if(Nid==id && Nip1==ip1 && Nip2==ip2 && Nip3==ip3 && Nip4==ip4 && Ntpt==tpt & RingInfo.B_fd==BId){
+						if(Nid==id && Nip1==ip1 && Nip2==ip2 && Nip3==ip3 && Nip4==ip4 && Ntpt==tpt && RingInfo.B_Id==BId){
 							//check that ring formed with the new server
 							close(RingInfo.B_fd);
 							Ring_SetB(ip,id,tpt);
 							RingInfo.B_fd=tcp_fdB;
 						}else{
 						#ifdef debug
-							fprintf(stderr,"[INFO-NewServer] Wrong Data in: %s\n",msgBuffer);
+							fprintf(stderr,"[INFO-NewServer] Wrong Data: %d;K;%d;%d.%d.%d.%d;%d\n",BId,Nid,Nip1,Nip2,Nip3,Nip4,Ntpt);
+							fprintf(stderr,"[INFO-NewServer] expected  : %d;K;%d;%d.%d.%d.%d;%d\n",RingInfo.B_Id,id,ip1,ip2,ip3,ip4,tpt);
 						#endif
 						return -1;
 						}
@@ -412,6 +444,76 @@ int NewServer(int tcp_fdB,int myID){
 	#endif
 	return -2;
 }
+int RingInsert( int myId,char *msgBuffer ,int id,char type,int id2,int ip1,int ip2,int ip3,int ip4,char *ip,int tpt){
+	//insert new server 
+	//breaks old ring after sucessfull connect to the new server to create a new ring
+	int n;
+	int B_fd=RingInfo.B_fd;//read from previous ringNode
+	int msgSize;
+	struct RingInfoType RingInfoBackup;
+	if(id==RingInfo.A_Id){
+		RingInfoBackup=RingInfo;
+		Ring_SetA(ip,id2,tpt);
+		if(0>OuroborosHead(myId)){
+			//FAilure to connect with new Server
+			RingInfo=RingInfoBackup;//faz o back up da informação correcta do anel
+			#ifdef debug
+				fprintf(stderr,"[INFO-RingToken] Fail to conect to new server\n",RingInfo.A_IP,RingInfo.A_Port,msgBuffer);
+			#endif
+			/*Avisar SERVIDOR START QUE FALHOU*/
+			/** Type F warns that the head of ring (server before StartServer) failed to connect to the new server, aborts new server */
+			/***TOKEN myID;F;id2;pip2;tpt2\n**/
+			sprintf(msgBuffer,"TOKEN %d;F;%d;%d.%d.%d.%d;%d\n\0",myId,id2,ip1,ip2,ip3,ip4,tpt);
+			msgSize=strlen(msgBuffer)+1;
+			if(msgSize==write(RingInfo.A_fd,msgBuffer,msgSize)){
+				//Success
+				#ifdef debug
+					fprintf(stderr,"[INFO-RingToken] Sent{%s:%d}: %s\n",RingInfo.A_IP,RingInfo.A_Port,msgBuffer);
+				#endif
+			}else{
+				//Failed
+				#ifdef debug
+					fprintf(stderr,"[Critical-RingToken] Failed To A_node! exit(0)!\n");
+				#endif
+				#ifdef ExitOnCritic
+					exit(0);
+				#endif
+				return -1;
+			}
+			return 0;
+		}else{
+			//Sucess to connect with new Server
+			#ifdef debug
+				fprintf(stderr,"[INFO-RingToken] Success to conect to new server\n",RingInfo.A_IP,RingInfo.A_Port,msgBuffer);
+			#endif
+			/*Avisar SERVIDOR START QUE Success*/
+			/** Type F warns that the head of ring (server before StartServer) failed to connect to the new server, aborts new server */
+			/***TOKEN myID;F;id2;pip2;tpt2\n**/
+			sprintf(msgBuffer,"TOKEN %d;K;%d;%d.%d.%d.%d;%d\n\0",myId,id2,ip1,ip2,ip3,ip4,tpt);
+			msgSize=strlen(msgBuffer)+1;
+			if(msgSize==write(RingInfoBackup.A_fd,msgBuffer,msgSize)){
+				//Success
+				#ifdef debug
+					fprintf(stderr,"[INFO-RingToken] Sent{%s:%d}: %s\n",RingInfo.A_IP,RingInfo.A_Port,msgBuffer);
+				#endif
+			}else{
+				//Failed
+				#ifdef debug
+					fprintf(stderr,"[Critical-RingToken] Failed To A_node! exit(0)!\n");
+				#endif
+				#ifdef ExitOnCritic
+					exit(0);
+				#endif
+				return -1;
+			}
+			close(RingInfoBackup.A_fd);//close old A_fd connection
+			return RingInfo.A_fd;
+		}
+	}else{
+		//Continue to pass the msg
+		return RingMsgPidgeon(msgBuffer,RingMsgSize_TOKEN);
+	}	
+}
 int RingToken(int myId){
 	//add B data to RingInfo
 	char msgBuffer[RingMsgSize_TOKEN];//worst msg size plus 1
@@ -436,83 +538,15 @@ int RingToken(int myId){
 				#ifdef debug
 					fprintf(stderr,"[INFO-RingToken] DATA: %d -> [%c|%d@%s:%d]\n",id,type,id2,ip,tpt);
 				#endif
+				/*******************/
 				switch(type){
 					case 'N':
-						if(id=RingInfo.A_Id){
-							RingInfoBackup=RingInfo;
-							Ring_SetA(ip,id2,tpt);
-							if(0>OuroborosHead(myId)){
-								//FAilure to connect with new Server
-								RingInfo=RingInfoBackup;//faz o back up da informação correcta do anel
-								#ifdef debug
-									fprintf(stderr,"[INFO-RingToken] Fail to conect to new server\n",RingInfo.A_IP,RingInfo.A_Port,msgBuffer);
-								#endif
-								/*Avisar SERVIDOR START QUE FALHOU*/
-								/** Type F warns that the head of ring (server before StartServer) failed to connect to the new server, aborts new server */
-								/***TOKEN myID;F;id2;pip2;tpt2\n**/
-								sprintf(msgBuffer,"TOKEN %d;F;%d;%d.%d.%d.%d;%d\n\0",myId,id2,ip1,ip2,ip3,ip4,tpt);
-								msgSize=strlen(msgBuffer)+1;
-								if(msgSize==write(RingInfo.A_fd,msgBuffer,msgSize)){
-									//Success
-									#ifdef debug
-										fprintf(stderr,"[INFO-RingToken] Sent{%s:%d}: %s\n",RingInfo.A_IP,RingInfo.A_Port,msgBuffer);
-									#endif
-								}else{
-									//Failed
-									#ifdef debug
-										fprintf(stderr,"[Critical-RingToken] Failed To A_node! exit(0)!\n");
-									#endif
-									#ifdef ExitOnCritic
-										exit(0);
-									#endif
-									return -1;
-								}
-								return 0;
-							}else{
-								//Sucess to connect with new Server
-								#ifdef debug
-									fprintf(stderr,"[INFO-RingToken] Success to conect to new server\n",RingInfo.A_IP,RingInfo.A_Port,msgBuffer);
-								#endif
-								/*Avisar SERVIDOR START QUE Success*/
-								/** Type F warns that the head of ring (server before StartServer) failed to connect to the new server, aborts new server */
-								/***TOKEN myID;F;id2;pip2;tpt2\n**/
-								sprintf(msgBuffer,"TOKEN %d;K;%d;%d.%d.%d.%d;%d\n\0",myId,id2,ip1,ip2,ip3,ip4,tpt);
-								msgSize=strlen(msgBuffer)+1;
-								if(msgSize==write(RingInfoBackup.A_fd,msgBuffer,msgSize)){
-									//Success
-									#ifdef debug
-										fprintf(stderr,"[INFO-RingToken] Sent{%s:%d}: %s\n",RingInfo.A_IP,RingInfo.A_Port,msgBuffer);
-									#endif
-								}else{
-									//Failed
-									#ifdef debug
-										fprintf(stderr,"[Critical-RingToken] Failed To A_node! exit(0)!\n");
-									#endif
-									#ifdef ExitOnCritic
-										exit(0);
-									#endif
-									return -1;
-								}
-								close(RingInfoBackup.A_fd);//close old A_fd connection
-								return RingInfo.A_fd;
-							}
-						}else{
-							//Continue to pass the msg
-							if(msgSize==write(RingInfo.A_fd,msgBuffer,msgSize)){
-								//Success
-								#ifdef debug
-									fprintf(stderr,"[INFO-RingToken] Sent{%s:%d}: %s\n",RingInfo.A_IP,RingInfo.A_Port,msgBuffer);
-								#endif
-								return RingInfo.A_fd;
-							}else{
-								//Failed
-								#ifdef debug
-									fprintf(stderr,"[ERROR-RingTokend] Failed To Sent!\n");
-								#endif
-								return -1;
-							}	
-						}
-					break;
+						return RingInsert( myId,msgBuffer,id,type,id2,ip1,ip2,ip3,ip4,ip,tpt);
+					default:
+						#ifdef debug
+							fprintf(stderr,"[INFO-RingToken] Sent{%d:%s:%d}: %s\n",RingInfo.A_Id,RingInfo.A_IP,RingInfo.A_Port,msgBuffer);
+						#endif
+						return RingMsgPidgeon(msgBuffer,RingMsgSize_TOKEN);
 				}
 			}else{
 				//Fails match

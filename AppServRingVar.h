@@ -11,6 +11,9 @@
 #define MYIPSIZE 16
 #define AppServRingVar
 #define debug
+#define ErrRingIngnore -1
+#define ErrRingA -3
+#define ErrRingB -2
 extern const char *GetTypeVectorName[];
  
 extern struct RingInfoType{	

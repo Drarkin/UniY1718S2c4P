@@ -140,6 +140,7 @@
 			
 			if(RingInfo.A_fd>-1)FD_SET(RingInfo.A_fd,&rfds);
 			if(RingInfo.B_fd>-1)FD_SET(RingInfo.B_fd,&rfds);
+			if(afd>-1)FD_SET(RingInfo.B_fd,&rfds);
 		#endif
 			
 			
@@ -176,10 +177,15 @@
 					if(intaux<0){
 						//erro
 						#ifdef debug
-							fprintf(stderr,"[INFO-appRun] close afd:%d",afd);
+							fprintf(stderr,"[ERROR-appRun] Close afd:%d\n",afd);
 						#endif
 						close(afd);
+						afd=-1;
 					}else{
+						//erro
+						#ifdef debug
+							if(AppState.ss)fprintf(stderr,"[INFO-appRun] Ring Got New MEmber id:%d\n",RingInfo.B_Id);
+						#endif
 						//anel criado
 						AppState.ring=1;
 					}
@@ -188,12 +194,21 @@
 			if (FD_ISSET(RingInfo.B_fd,&rfds)){
 				//NEW TCP Msg
 				#ifdef debug
-					fprintf(stderr,"[INFO-appRun] NEW TCP MSG from previous Server\n");
+					fprintf(stderr,"[INFO-appRun] NEW TCP MSG from previous Server (fd:%d)\n",RingInfo.B_fd);
 				#endif
 				intaux=Ring(afd,&tpc_in_Addr,id);
 				#ifdef debug
 					fprintf(stderr,"[INFO-appRun] Ring=%d\n",intaux);
 				#endif
+				if(intaux<0){
+					//erro
+					#ifdef debug
+						fprintf(stderr,"[ERROR-appRun]close B_fd:%d\n",RingInfo.B_fd);
+					#endif
+					close(RingInfo.B_fd);
+					RingInfo.B_fd=-1;
+					AppState.ring=-1;
+				}
 			}
 			/*
 			if (FD_ISSET(RingInfo.A_fd,&rfds)){
