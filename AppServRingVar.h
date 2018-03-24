@@ -9,6 +9,15 @@
 
 #define GetType 	GetTypeVectorName[RingInfo.type] //indica o tipo do anel
 #define MYIPSIZE 16
+/**
+	Este codigo serve só para a criação do anel e entrada e saida dos seus membros, bem como a passagem de Tokens respectivos a gestao de membros do anel
+	funcoes principais
+		RingMsgPidgeon - Enviar mensagens entre os membros do anele
+		
+		Ring - analisar msg do anel e executar as operaçoes necessarias para a entrada de membros e saida
+		
+**/
+
 #define RingMsgSize_MAX 100//72
 #define AppServRingVar
 #define debug

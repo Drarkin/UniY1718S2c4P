@@ -15,7 +15,7 @@
 				//in ring pass to next ds
 				withdraw_ds(ServX);
 				bufferclean();//Reset burffer data
-				sprintf(myBuffer,"NEW_DS\0");//prevent buffer overflow
+				sprintf(myBuffer,"TOKEN %d;S\n\0",id);//prevent buffer overflow
 				RingMsgPidgeon(myBuffer);
 			}else{
 				//alone
@@ -104,18 +104,18 @@
 			if (AppState.ss){
 				withdraw_start(ServX);
 				bufferclean();//Reset burffer data
-				sprintf(myBuffer,"NEW_START\0");//prevent buffer overflow
+				sprintf(myBuffer,"NEW_START\n\0");//prevent buffer overflow
 				RingMsgPidgeon(myBuffer);
 			}
 			if (AppState.ds){
 				withdraw_ds(ServX);
 				bufferclean();//Reset burffer data
-				sprintf(myBuffer,"NEW_DS\0");//prevent buffer overflow
+				sprintf(myBuffer,"TOKEN %d;I\n\0",id);//prevent buffer overflow
 				RingMsgPidgeon(myBuffer);
 			}	
 			if (AppState.ring){		
 				bufferclean();//Reset burffer data
-				sprintf(myBuffer,"TOKEN %d;O;%d;%s%d;\0",id,RingInfo.A_Id,RingInfo.A_IP,RingInfo.A_Port);//prevent buffer overflow
+				sprintf(myBuffer,"TOKEN %d;O;%d;%s%d;\n\0",id,RingInfo.A_Id,RingInfo.A_IP,RingInfo.A_Port);//prevent buffer overflow
 				RingMsgPidgeon(myBuffer);
 				//clean state to ini
 				close(RingInfo.A_fd);RingInfo.A_fd=-1;
@@ -233,8 +233,14 @@
 				#ifdef debug
 					fprintf(stderr,"[INFO-appRun] NEW TCP MSG from previous Server (fd:%d)\n",RingInfo.B_fd);
 				#endif
+				intaux=0;//ini
 				RingReadMSG();
-				intaux=Ring(afd,&tpc_in_Addr,id,AppState.ss);//id means id of this server
+				if(myScmp("NEW_START\n")){
+					set_start(ServX);
+				}else if(myScmp("NEW_DS\n")){
+					set_ds(ServX);
+				}else 
+					intaux=Ring(afd,&tpc_in_Addr,id,AppState.ss);//id means id of this server
 				#ifdef debug
 					fprintf(stderr,"[INFO-appRun] Ring=%d\n",intaux);
 				#endif
@@ -306,18 +312,23 @@
 					break;
 				case s_s_ok: //caso de 
 					//next ring element is himself
-					Oid=id;
-					strcpy(Oip,ip);
-					Otpt=tpt;
-					//
-					set_ds(ServX);
-					AppState.state=s_ds;
+					if(AppState.ring) {
+						AppState.state=ready;
+						
+					}else{
+						Oid=id;
+						strcpy(Oip,ip);
+						Otpt=tpt;
+						//
+						set_ds(ServX);
+						AppState.state=s_ds;
+					}
 					break;
 				default: break;	
 			}
 			//case all conections to ring are broken
 			if(RingInfo.A_fd==RingInfo.B_fd){
-					AppState.ring=-1;
+					AppState.ring=0;
 					RingInfo.type=uno;
 					CleanRing();
 			}

@@ -98,8 +98,7 @@ int Ring(int fd2read,struct sockaddr_in *addr,int myId,int StartServer){
 				fprintf(stderr,"[CRITICAL-Ring] OUTSTATE!\n");
 			#endif
 			return ErrRingNewfd; //close connectiond that don't belong to a state
-	}
-		
+	}	
 	#ifdef debug
 		fprintf(stderr,"[WARNING-Ring] nothing to do!\n");
 	#endif
@@ -128,11 +127,7 @@ int JoinRing(int ServId,int myId,char *myIP,int myPort){
 		//Save Addr to RingInfo 
 			/**This is called for the new Server, so the addr is from the following server. We save it in A.
 			Later a diferent server will try conect to this one to close the ring, it will be B*/
-		/*//the Addr of A should already be set previous so we can connect using the addr
-		RingInfo.A_addr=(*addr);	
-		RingInfo.A_Id=ServId;
-		strncpy(RingInfo.A_IP,inet_ntoa((*addr).sin_addr),16);
-		RingInfo.A_Port=ntohs((*addr).sin_port);/**/
+		/*//the Addr of A should already be set previous so we can connect using the addr*/
 		//send msg to StartServer
 		sprintf(msgBuffer,"NEW %d;%s;%d\n\0",myId,myIP,(short)myPort);
 		n=strlen(msgBuffer)+1;
@@ -165,7 +160,7 @@ int JoinRing(int ServId,int myId,char *myIP,int myPort){
 	#endif
 	return -2;
 }
-int RingLeave(int myId){
+int CloseRingAfterMemberLeaves(int myId){
 	/*iIn this function we will close the ring again, after the sucessor of this node leave the ring
 	first we will test if the node leaving is the sucessor of this node, 
 		if it is the successor we will do something like joinRing,*/
@@ -215,7 +210,7 @@ int RingLeave(int myId){
 	}else{
 		//Fails match
 		#ifdef debug
-			fprintf(stderr,"[ERROR-RingInsert] FAILED! Invalid IPv4: %d.%d.%d.%d\n",ip1,ip2,ip3,ip4);
+			fprintf(stderr,"[ERROR-InsertNewRingMember] FAILED! Invalid IPv4: %d.%d.%d.%d\n",ip1,ip2,ip3,ip4);
 		#endif
 		return -1;
 	}	
@@ -477,8 +472,6 @@ int NewServer(int tcp_fdB,int myID){
 					#endif
 					return -1;
 				}
-				//comfirm new tail
-				
 			}else{
 				//Fails match
 				#ifdef debug
@@ -502,7 +495,7 @@ int NewServer(int tcp_fdB,int myID){
 	#endif
 	return -2;
 }
-int RingInsert( int myId){
+int InsertNewRingMember( int myId){
 	//insert new server 
 	//breaks old ring after sucessfull connect to the new server to create a new ring
 	int n;
@@ -523,7 +516,7 @@ int RingInsert( int myId){
 				//FAilure to connect with new Server
 				RingInfo=RingInfoBackup;//faz o back up da informação correcta do anel
 				#ifdef debug
-					fprintf(stderr,"[INFO-RingToken] Fail to conect to new server\n",RingInfo.A_IP,RingInfo.A_Port,msgBuffer);
+					fprintf(stderr,"[INFO-InsertNewRingMember] Fail to conect to new server\n",RingInfo.A_IP,RingInfo.A_Port,msgBuffer);
 				#endif
 				/*Avisar SERVIDOR START QUE FALHOU*/
 				/** Type F warns that the head of ring (server before StartServer) failed to connect to the new server, aborts new server */
@@ -533,12 +526,12 @@ int RingInsert( int myId){
 				if(msgSize==write(RingInfo.A_fd,msgBuffer,msgSize)){
 					//Success
 					#ifdef debug
-						fprintf(stderr,"[INFO-RingToken] Sent{%s:%d}: %s\n",RingInfo.A_IP,RingInfo.A_Port,msgBuffer);
+						fprintf(stderr,"[INFO-InsertNewRingMember] Sent{%s:%d}: %s\n",RingInfo.A_IP,RingInfo.A_Port,msgBuffer);
 					#endif
 				}else{
 					//Failed
 					#ifdef debug
-						fprintf(stderr,"[Critical-RingToken] Failed To A_node! exit(0)!\n");
+						fprintf(stderr,"[Critical-InsertNewRingMember] Failed To A_node! exit(0)!\n");
 					#endif
 					#ifdef ExitOnCritic
 						exit(0);
@@ -549,7 +542,7 @@ int RingInsert( int myId){
 			}else{
 				//Sucess to connect with new Server
 				#ifdef debug
-					fprintf(stderr,"[INFO-RingToken] Success to conect to new server\n",RingInfo.A_IP,RingInfo.A_Port,msgBuffer);
+					fprintf(stderr,"[INFO-InsertNewRingMember] Success to conect to new server\n",RingInfo.A_IP,RingInfo.A_Port,msgBuffer);
 				#endif
 				/*Avisar SERVIDOR START QUE Success*/
 				/** Type F warns that the head of ring (server before StartServer) failed to connect to the new server, aborts new server */
@@ -559,15 +552,12 @@ int RingInsert( int myId){
 				if(msgSize==write(RingInfoBackup.A_fd,msgBuffer,msgSize)){
 					//Success
 					#ifdef debug
-						fprintf(stderr,"[INFO-RingToken] Sent{%s:%d}: %s\n",RingInfo.A_IP,RingInfo.A_Port,msgBuffer);
+						fprintf(stderr,"[INFO-InsertNewRingMember] Sent{%s:%d}: %s\n",RingInfo.A_IP,RingInfo.A_Port,msgBuffer);
 					#endif
 				}else{
 					//Failed
 					#ifdef debug
-						fprintf(stderr,"[Critical-RingToken] Failed To A_node! exit(0)!\n");
-					#endif
-					#ifdef ExitOnCritic
-						exit(0);
+						fprintf(stderr,"[Critical-InsertNewRingMember] Failed To A_node! exit(0)!\n");
 					#endif
 					return -1;
 				}
@@ -581,9 +571,9 @@ int RingInsert( int myId){
 	}else{
 		//Fails match
 		#ifdef debug
-			fprintf(stderr,"[INFO-RingInsert] FAILED! Invalid IPv4: %d.%d.%d.%d\n",ip1,ip2,ip3,ip4);
+			fprintf(stderr,"[INFO-InsertNewRingMember] FAILED! Invalid IPv4: %d.%d.%d.%d\n",ip1,ip2,ip3,ip4);
 		#endif
-		return -1;
+		return ErrRingIngnore;
 	}	
 }
 
@@ -623,17 +613,23 @@ int RingToken(int myId){
 	/*n=sscanf(msgBuffer,"TOKEN %d;%c;%d;%d.%d.%d.%d;%d",&id,&type,&id2,&ip1,&ip2,&ip3,&ip4,&tpt);/**/
 	n=sscanf(RingMsgBuffer,"TOKEN %d;%c",&id,&type);
 	if (2==n){
-		if(id==myId) return ErrRingIngnore;
+		if(id==myId) fprintf(stderr,"[INFO-RingTokenTOKEN] has returned!\n");
 		switch(type){
-			case 'N':
-				return RingInsert( myId);
+			case 'N': if(id!=myId)//ingore if msg have server id
+					return InsertNewRingMember(myId);
 				break;
-			case 'O':
-				return RingLeave(myId);
+			case 'O':if(id!=myId)
+					return CloseRingAfterMemberLeaves(myId);
 				break;
-			default:
-				return RingMsgPidgeon(RingMsgBuffer);
+			case 'S':break;
+			case 'I':break;
+			case 'D':break;
+			case 'T':break;
+			case 'M':break;
+			default: return ErrRingIngnore;//ignore mensagens nao programadas
 		}
+		if(id==myId)return ErrRingIngnore;//nao renvia mensagens prorpias
+		return RingMsgPidgeon(RingMsgBuffer);
 	}else{
 		//Fails match
 		#ifdef debug
