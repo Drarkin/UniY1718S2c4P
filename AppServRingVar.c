@@ -46,12 +46,14 @@ void Ring_SetB(char *B_IP,int B_Id,int B_Port){
 	}
 /**/
 
-int RingMsgPidgeon(char *msg,int size){
+int RingMsgPidgeon(char *msg){
 //Continue to pass the msg
+	int size;
 	int msgSize;
 	#ifdef debug
-	fprintf(stderr,"[INFO-Pidgeon] Sent{%d@%s:%d}: ",RingInfo.A_Id,RingInfo.A_IP,RingInfo.A_Port);
+	fprintf(stderr,"[INFO-Pidgeon] Sent %d Bytes{%d@%s:%d}: ",strlen(msg),RingInfo.A_Id,RingInfo.A_IP,RingInfo.A_Port);
 	#endif
+	size=strlen(msg)+1;
 	msgSize=write(RingInfo.A_fd,msg,size);
 	if(msgSize==size){
 		//Success
@@ -100,6 +102,10 @@ int Ring(int fd2read,struct sockaddr_in *addr,int myId){
 }
 int JoinRing(int ServId,int myId,char *myIP,int myPort){
 	//Join a ring or other server to form a ring
+	/*
+	Before using this function, it's necessary to use:
+		Ring_SetA(Taerget_STR_ip,int_id,int_Otpt);
+	*/
 	struct sockaddr_in *addr=&RingInfo.A_addr;
 	char msgBuffer[RingMsgSize_NEW];//worst msg size plus 1
 	int tcp_fd=socket(AF_INET,SOCK_STREAM,0);
@@ -125,7 +131,7 @@ int JoinRing(int ServId,int myId,char *myIP,int myPort){
 		sprintf(msgBuffer,"NEW %d;%s;%d\n\0",myId,myIP,(short)myPort);
 		n=strlen(msgBuffer)+1;
 		#ifdef debug
-			fprintf(stderr,"[INFO-JoinRing] Sent{%s:%d}: %s\n",RingInfo.A_IP,RingInfo.A_Port,msgBuffer);
+			fprintf(stderr,"[INFO-JoinRing] Sent{%d:%s:%d}: %s\n",RingInfo.A_Id,RingInfo.A_IP,RingInfo.A_Port,msgBuffer);
 		#endif
 		//if(0<write(tcp_fd,msgBuffer,strlen(msgBuffer))){
 		if(n==write(tcp_fd,msgBuffer,n)){
@@ -511,7 +517,7 @@ int RingInsert( int myId,char *msgBuffer ,int id,char type,int id2,int ip1,int i
 		}
 	}else{
 		//Continue to pass the msg
-		return RingMsgPidgeon(msgBuffer,RingMsgSize_TOKEN);
+		return RingMsgPidgeon(msgBuffer);
 	}	
 }
 int RingToken(int myId){
@@ -546,7 +552,7 @@ int RingToken(int myId){
 						#ifdef debug
 							fprintf(stderr,"[INFO-RingToken] Sent{%d:%s:%d}: %s\n",RingInfo.A_Id,RingInfo.A_IP,RingInfo.A_Port,msgBuffer);
 						#endif
-						return RingMsgPidgeon(msgBuffer,RingMsgSize_TOKEN);
+						return RingMsgPidgeon(msgBuffer);
 				}
 			}else{
 				//Fails match

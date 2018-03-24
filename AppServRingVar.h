@@ -45,6 +45,7 @@ extern struct RingInfoType{
 
 //Before using JoinRing, The address of StartServer should already be written into A zone of RingInfo by using Ring_SetA
 void CleanRing ();
+int RingMsgPidgeon(char *msg);
 void Ring_SetA(char *A_IP,int A_Id,int A_Port);
 void Ring_SetB(char *B_IP,int B_Id,int B_Port);
 int Ring(int fd2read,struct sockaddr_in *addr,int myId);

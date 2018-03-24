@@ -58,15 +58,18 @@
 		intaux=read(STDIN,myBuffer,buffersize-1);//prevent buffer overflow
 		/*prevent loopbug*/
 		if (intaux<=0) {getchar();return 0;}
-		if (myScmp("quit")||myScmp("exit")){
+		if (myScmp("q")||myScmp("l")||myScmp("quit")||myScmp("leave")||myScmp("exit")){
 			if myScmp("exit") 
-				if (!(AppState.ds || AppState.ss ))return 1;
+				if (!(AppState.ds || AppState.ss || AppState.ring))return 1;
 				else fprintf(stderr,"still conectect!\n");
 			if (AppState.ds==true){
 				withdraw_ds(ServX);
 			}
 			if (AppState.ss==true){
 				withdraw_start(ServX);
+				#ifdef AppServRingVar
+					
+				#endif
 			}
             //Reset StartServerInfo O vars
             strcpy(Oip,"---.---.---.---");
@@ -205,6 +208,16 @@
 					close(RingInfo.B_fd);
 					RingInfo.B_fd=-1;
 					AppState.ring=-1;
+					if(AppState.ss){
+						//perdendo a conecção com o resto do anel, destroi-se o nael e volta ao estado de solo
+						RingInfo.type=uno;
+						if (RingInfo.A_fd>-1){
+							close(RingInfo.A_fd);
+							RingInfo.A_fd=-1;
+						}
+						CleanRing();
+						AppState.ring=0;
+					}
 				}
 			}
 			/*
@@ -249,11 +262,10 @@
 						serv_start();
 						Ring_SetA(Oip,Oid,Otpt);
 						if(JoinRing(ServX,id,ip,tpt)>-1){
+							//Success
 							AppState.ring=true;
 						}
-						
-						//set next ring address
-						//conect to ring
+						//fail to joinring
 					}
 					break;
 				case s_s_ok: //caso de 
