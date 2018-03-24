@@ -49,4 +49,6 @@ int OuroborosHead(int myId);
 int OuroborosTail(int B_fd,struct sockaddr_in *B_addr,int myId);
 int JoinRing(int ServId,int myId,char *myIP,int myPort);
 int CreateRing(int tcp_fdB,struct sockaddr_in *addr,int myId);
+int NewServer(int tcp_fdB,int myID);
+int RingToken(int myId);
    

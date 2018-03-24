@@ -90,6 +90,10 @@
 			printf(">ServerState:\n\tmyID:%i;\n\tServX:%i;\n\tstartS: %d@%s:%d\n\t%s (ss: %i  /  ds: %i / ring: %i)\n",id,ServX,
                    Oid,Oip,Otpt,
                    GetMState,AppState.ss,AppState.ds,AppState.ring);
+		#ifdef AppServRingVar
+			printf(">RingInfo-NodeA: (fd=%d) %d@%s:%d\n",RingInfo.A_fd,RingInfo.A_Id,RingInfo.A_IP,RingInfo.A_Port);
+			printf(">RingInfo-NodeB: (fd=%d) %d@%s:%d\n",RingInfo.B_fd,RingInfo.B_Id,RingInfo.B_IP,RingInfo.B_Port);
+		#endif
 			//print state
 		}else if (myScmp("leave")){
 			//saida do servidor do anel
@@ -167,7 +171,7 @@
 				}else{
 					intaux=Ring(afd,&tpc_in_Addr,id);
 					#ifdef debug
-						fprintf(stderr,"[INFO-appRun] afd=%d\t Ring=%d\n",afd,intaux);
+						fprintf(stderr,"[INFO-appRun] afd=%d\t Ring:%d\n",afd,intaux);
 					#endif
 					if(intaux<0){
 						//erro
@@ -175,6 +179,9 @@
 							fprintf(stderr,"[INFO-appRun] close afd:%d",afd);
 						#endif
 						close(afd);
+					}else{
+						//anel criado
+						AppState.ring=1;
 					}
 				}
 			}
@@ -226,11 +233,13 @@
 					if (Oid==0){
 						set_start(ServX);//para o servico X
 					}else{
-						AppState.ring=true;
 						AppState.state=joinR;
 						serv_start();
 						Ring_SetA(Oip,Oid,Otpt);
-						JoinRing(ServX,id,ip,tpt);
+						if(JoinRing(ServX,id,ip,tpt)>-1){
+							AppState.ring=true;
+						}
+						
 						//set next ring address
 						//conect to ring
 					}
