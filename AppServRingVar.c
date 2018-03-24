@@ -19,9 +19,8 @@ void CleanRing (){
 	return;
 }
 /**setting state of node/ring*/
-void RingSetNodeFree(){
-	
-}
+ int RingBusy(){return Sring;}
+ int RingNodeBusy(){return Snode;}
 void RingSetNodeBusy(){ Snode=busy;}
 void RingSetNodeIdle(){ Snode=idle;}
 void RingSetBusy(){Sring=busy;}
@@ -629,22 +628,16 @@ int RingToken(int myId){
 				return ErrRingIngnore;
 				break;
 			case 'I':RingSetBusy();break;
-			case 'D':RingSetIdle();break;
+			case 'D':if (RingNodeBusy()){RingSetIdle();break;}else if(myId>id){TOKEN='s';break;}else return ErrRingIngnore;//executa como dito no enunciado
 			case 'T':break;
 			case 'M':break;
 			default: return ErrRingIngnore;//ignore mensagens nao programadas
 		}
-		if(id==myId)return ErrRingIngnore;//nao renvia mensagens prorpias
-		return RingMsgPidgeon(RingMsgBuffer);
-	}else{
-		//Fails match
-		#ifdef debug
-			fprintf(stderr,"[INFO-RingToken] FAILED! Not Recognized\n");
-		#endif
-		return ErrRingIngnore;
-		}
+		if(id==myId)return ErrRingIngnore;//nao renvia mensagens proprias
+		return RingMsgPidgeon(RingMsgBuffer);//renvia mensagens
+	}
 	#ifdef debug
-		fprintf(stderr,"[CRITICAL-RingToken] OUTSTATE!\n");
+			fprintf(stderr,"[INFO-RingToken] FAILED! Not Recognized\n");
 	#endif
-	return -1;	
+	return  ErrRingIngnore;//ignore mensagens nao programadas;	
 }

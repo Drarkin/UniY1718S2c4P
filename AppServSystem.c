@@ -1,7 +1,7 @@
 #include "AppServSystem.h"
 #include <errno.h>
 	int ReadyState(){
-		if (-1==myrecv(udp_fp,NULL)){	
+		if (-1==myrecv(udp_fp,NULL)){
 			return AppState.state;//do't change state
 		}
 		if myScmp("MY_SERVICE ON"){
@@ -13,7 +13,7 @@
 			}
 			if (AppState.ring){
 				//in ring pass to next ds
-				RingSetBusy();
+				RingSetNodeBusy();
 				withdraw_ds(ServX);
 				bufferclean();//Reset burffer data
 				sprintf(myBuffer,"TOKEN %d;S\n\0",id);//prevent buffer overflow
@@ -28,7 +28,7 @@
 		return AppState.state;//do't change state
 	}
 	int BusyState(){
-		if (-1==myrecv(udp_fp,NULL)){	
+		if (-1==myrecv(udp_fp,NULL)){
 			return AppState.state;//do't change state
 		}
 		if (LastInAddr.sin_addr.s_addr!=C_addr.sin_addr.s_addr){
@@ -77,7 +77,7 @@
 		/*prevent loopbug*/
 		if (intaux<=0) {getchar();return 0;}
 		if (myScmp("q")||myScmp("quit")||myScmp("exit")){
-			if myScmp("exit") 
+			if myScmp("exit")
 				if (!(AppState.ds || AppState.ss || AppState.ring))return 1;
 				else fprintf(stderr,"still conectect!\n");
 			if(AppState.ring==0){
@@ -92,7 +92,7 @@
 				}
 				AppReset();
 			}else fprintf(stderr,"[WARNING-userIns] LEave the ring first!\n");
-				
+
 		}else if(myScmp("join")){
 			if (AppState.state==nready){
 				//entrar no anel do serviço x
@@ -117,8 +117,8 @@
 				bufferclean();//Reset burffer data
 				sprintf(myBuffer,"TOKEN %d;I\n\0",id);//prevent buffer overflow
 				RingMsgPidgeon(myBuffer);
-			}	
-			if (AppState.ring){		
+			}
+			if (AppState.ring){
 				bufferclean();//Reset burffer data
 				sprintf(myBuffer,"TOKEN %d;O;%d;%s%d;\n\0",id,RingInfo.A_Id,RingInfo.A_IP,RingInfo.A_Port);//prevent buffer overflow
 				RingMsgPidgeon(myBuffer);
@@ -129,8 +129,8 @@
 			}
 			AppReset();
 			#endif
-				
-			
+
+
 		}else if(myScmp("show_state")){
 			printf(">ServerState:\n\tmyID:%i;\n\tServX:%i;\n\tstartS: %d@%s:%d\n\t%s (ss: %i  /  ds: %i / ring: %i)\n",id,ServX,
                    Oid,Oip,Otpt,
@@ -189,12 +189,12 @@
 			if(afd>-1)FD_SET(RingInfo.B_fd,&rfds);
 		#endif
 			counter=select(maxfd+1,&rfds,
-							(fd_set*)NULL,(fd_set*)NULL,(struct timeval *)NULL);				
+							(fd_set*)NULL,(fd_set*)NULL,(struct timeval *)NULL);
 			if (counter<=0)myerr(158,"Failed in appRun()");
 			//put code to read STDIN when input is writen
 			if (FD_ISSET(STDIN,&rfds)){
 				if(userIns())return;
-			}	
+			}
 		#ifdef AppServRingVar
 			if (FD_ISSET(tcp_fd,&rfds)){
 				//NEW TCP connection
@@ -210,7 +210,7 @@
 					#ifdef debug
 						fprintf(stderr,"[INFO-appRun] afd negative (%d)! %s\n",afd,strerror(errnum));
 					#endif
-					
+
 				}else{
 					intaux=Ring(afd,&tpc_in_Addr,id,AppState.ss);//id means id of this server
 					#ifdef debug
@@ -230,6 +230,7 @@
 						#endif
 						//anel criado
 						AppState.ring=1;
+						AppState.state=ready;
 					}
 				}
 			}
@@ -242,12 +243,14 @@
 				RingReadMSG();
 				if(myScmp("NEW_START\n")){
 					set_start(ServX);
-				}else if (TOKEN=='S' && AppState.ds==false){
+				}else
+					intaux=Ring(afd,&tpc_in_Addr,id,AppState.ss);//id means id of this server
+				if (TOKEN=='S' && AppState.ds==false && AppState.state==ready){
+					fprintf(stderr,"REMOVER!!! fazer set ds\n");
 					set_ds(ServX);
 					AppState.state=s_ds;
 				}
-				else 
-					intaux=Ring(afd,&tpc_in_Addr,id,AppState.ss);//id means id of this server
+
 				#ifdef debug
 					fprintf(stderr,"[INFO-appRun] Token=%c Ring=%d %d %d \n",TOKEN,intaux,AppState.ds,false);
 				#endif
@@ -299,7 +302,7 @@
 					case busy:
 						AppState.state=BusyState();
 						break;
-					default: break;	
+					default: break;
 				}
 			}
 			switch(AppState.state){
@@ -317,11 +320,11 @@
 						//fail to joinring
 					}
 					break;
-				case s_s_ok: //caso de 
+				case s_s_ok: //caso de
 					//next ring element is himself
 					if(AppState.ring) {
 						AppState.state=ready;
-						
+
 					}else{
 						Oid=id;
 						strcpy(Oip,ip);
@@ -331,7 +334,7 @@
 						AppState.state=s_ds;
 					}
 					break;
-				default: break;	
+				default: break;
 			}
 			//case all conections to ring are broken
 			if(RingInfo.A_fd==RingInfo.B_fd){

@@ -56,22 +56,27 @@ extern struct RingInfoType{
            };
 		   */
 
-		   //setting state of node/ring
-void RingSetNodeIdle();
-void RingSetNodeBusy();
-void RingSetBusy();
-void RingSetIdle();
-//Before using JoinRing, The address of StartServer should already be written into A zone of RingInfo by using Ring_SetA
-void CleanRing ();
-int RingMsgPidgeon(char *msg);
-void Ring_SetA(char *A_IP,int A_Id,int A_Port);
-void Ring_SetB(char *B_IP,int B_Id,int B_Port);
-int Ring(int fd2read,struct sockaddr_in *addr,int myId,int StartServer);
-int OuroborosHead(int myId);
-int OuroborosTail(int B_fd,struct sockaddr_in *B_addr,int myId);
-int JoinRing(int ServId,int myId,char *myIP,int myPort);
-int CreateRing(int tcp_fdB,struct sockaddr_in *addr,int myId);
-int NewServer(int tcp_fdB,int myID);
-char *RingReadMSG();
-int RingToken(int myId);
+//setting state of node/ring
+/*<->*/ int RingBusy();
+/*<->*/ int RingNodeBusy();
+/*<->*/void RingSetNodeIdle();
+/*<->*/void RingSetNodeBusy();
+/*<->*/void RingSetBusy();
+/*<->*/void RingSetIdle();
+//Ring Creation
+/*<1>*/char *RingReadMSG();//Reads Messages from the previous (antecent) Node
+/*<2>*/int Ring(int fd2read,struct sockaddr_in *addr,int myId,int StartServer);//state machines that manages ring
+/*<->*/int JoinRing(int ServId,int myId,char *myIP,int myPort);//process of entering in an existing ring 
+/*NOTE** //Before using JoinRing, The address of StartServer should already be written into A zone of RingInfo by using Ring_SetA */
+/*<->*/int RingMsgPidgeon(char *msg);//sends msg around the ring
+/*<->*/void CleanRing ();//Deletes all information regarding the connected nodes.
+/*<->*/void Ring_SetA(char *A_IP,int A_Id,int A_Port);//set data about sucessor adrress and fd
+/*<->*/void Ring_SetB(char *B_IP,int B_Id,int B_Port);//set data about antecent address and fd
+
+/** Not Use Outside AppServRing **/
+int OuroborosHead(int myId);//dragon's head that bites the tail
+int OuroborosTail(int B_fd,struct sockaddr_in *B_addr,int myId);//new dragon's tail, it will be bitten
+int CreateRing(int tcp_fdB,struct sockaddr_in *addr,int myId);//Creates the Ring when a second server tries to conect
+int NewServer(int tcp_fdB,int myID);//Adds a new server into the Ring 
+int RingToken(int myId);//State Machine that manages tokens circulation
    
