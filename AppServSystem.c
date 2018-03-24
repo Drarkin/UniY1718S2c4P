@@ -158,7 +158,6 @@
 				if(userIns())return;
 			}	
 		#ifdef AppServRingVar
-			#ifdef AppServRingVar
 			if (FD_ISSET(tcp_fd,&rfds)){
 				//NEW TCP connection
 				#ifdef debug
@@ -179,7 +178,7 @@
 					#ifdef debug
 						fprintf(stderr,"[INFO-appRun] afd=%d\t Ring:%d\n",afd,intaux);
 					#endif
-					if(intaux<0){
+					if(intaux==ErrRingIngnore){
 						//erro
 						#ifdef debug
 							fprintf(stderr,"[ERROR-appRun] Close afd:%d\n",afd);
@@ -206,7 +205,7 @@
 					fprintf(stderr,"[INFO-appRun] Ring=%d\n",intaux);
 				#endif
 				//conection error. close broken connections
-				if(intaux<ErrRingB){
+				if(intaux==ErrRingB){
 					//erro
 					#ifdef debug
 						fprintf(stderr,"[ERROR-appRun]close B_fd:%d\n",RingInfo.B_fd);
@@ -214,7 +213,7 @@
 					close(RingInfo.B_fd);
 					RingInfo.B_fd=-1;
 				}
-				if(intaux<ErrRingA){
+				if(intaux==ErrRingA){
 					//erro
 					#ifdef debug
 						fprintf(stderr,"[ERROR-appRun]close A_fd:%d\n",RingInfo.A_fd);
@@ -228,7 +227,6 @@
 				//NEW TCP MSG
 			}/**/
 		#endif//
-		#endif
 			if (FD_ISSET(udp_fp,&rfds)){
 				switch (AppState.state){
 					case g_s:
