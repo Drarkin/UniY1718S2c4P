@@ -13,6 +13,7 @@
 			}
 			if (AppState.ring){
 				//in ring pass to next ds
+				RingSetBusy();
 				withdraw_ds(ServX);
 				bufferclean();//Reset burffer data
 				sprintf(myBuffer,"TOKEN %d;S\n\0",id);//prevent buffer overflow
@@ -42,7 +43,11 @@
 				return AppState.state;
 			}
 			if (AppState.ring){
-				//in ring pass to next ds
+				//in ring infor disponibility
+				RingSetNodeIdle();
+				bufferclean();//Reset burffer data
+				sprintf(myBuffer,"TOKEN %d;D\n\0",id);//prevent buffer overflow
+				RingMsgPidgeon(myBuffer);
 			}else{
 				//alone
 				printf(">>Free client (%s:%d)\n",inet_ntoa(C_addr.sin_addr),C_addr.sin_port);
@@ -237,12 +242,14 @@
 				RingReadMSG();
 				if(myScmp("NEW_START\n")){
 					set_start(ServX);
-				}else if(myScmp("NEW_DS\n")){
+				}else if (TOKEN=='S' && AppState.ds==false){
 					set_ds(ServX);
-				}else 
+					AppState.state=s_ds;
+				}
+				else 
 					intaux=Ring(afd,&tpc_in_Addr,id,AppState.ss);//id means id of this server
 				#ifdef debug
-					fprintf(stderr,"[INFO-appRun] Ring=%d\n",intaux);
+					fprintf(stderr,"[INFO-appRun] Token=%c Ring=%d %d %d \n",TOKEN,intaux,AppState.ds,false);
 				#endif
 				//conection error. close broken connections
 				if(intaux==ErrRingB){

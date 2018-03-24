@@ -56,6 +56,11 @@ extern struct RingInfoType{
            };
 		   */
 
+		   //setting state of node/ring
+void RingSetNodeIdle();
+void RingSetNodeBusy();
+void RingSetBusy();
+void RingSetIdle();
 //Before using JoinRing, The address of StartServer should already be written into A zone of RingInfo by using Ring_SetA
 void CleanRing ();
 int RingMsgPidgeon(char *msg);

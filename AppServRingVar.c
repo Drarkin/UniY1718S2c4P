@@ -11,13 +11,21 @@ struct RingInfoType RingInfo;
 char RingMsgBuffer[RingMsgSize_MAX];
 char TOKEN;
 
+enum {idle,busy} Snode,Sring;
 void CleanRing (){
 	memset((void*)&RingInfo,(int)'\0',sizeof(RingInfo));
 	RingInfo.A_fd=-1;
 	RingInfo.B_fd=-1;
 	return;
 }
-
+/**setting state of node/ring*/
+void RingSetNodeFree(){
+	
+}
+void RingSetNodeBusy(){ Snode=busy;}
+void RingSetNodeIdle(){ Snode=idle;}
+void RingSetBusy(){Sring=busy;}
+void RingSetIdle(){Sring=idle;}
 /**Set Addr in RingInfo*/
 void Ring_SetA(char *A_IP,int A_Id,int A_Port){
 	//set addr data correctly
@@ -608,6 +616,7 @@ int RingToken(int myId){
 	/*n=sscanf(msgBuffer,"TOKEN %d;%c;%d;%d.%d.%d.%d;%d",&id,&type,&id2,&ip1,&ip2,&ip3,&ip4,&tpt);/**/
 	n=sscanf(RingMsgBuffer,"TOKEN %d;%c",&id,&type);
 	if (2==n){
+		TOKEN=type;//allows external code to see what was the type of token
 		if(id==myId) fprintf(stderr,"[INFO-RingTokenTOKEN] has returned!\n");
 		switch(type){
 			case 'N': if(id!=myId)//ingore if msg have server id
@@ -616,14 +625,15 @@ int RingToken(int myId){
 			case 'O':if(id!=myId)
 					return CloseRingAfterMemberLeaves(myId);
 				break;
-			case 'S':break;
-			case 'I':break;
-			case 'D':break;
+			case 'S':if(id==myId && Snode==busy){sprintf(msgBuffer,"TOKEN %d;I\n",myId);return RingMsgPidgeon(msgBuffer);}
+				return ErrRingIngnore;
+				break;
+			case 'I':RingSetBusy();break;
+			case 'D':RingSetIdle();break;
 			case 'T':break;
 			case 'M':break;
 			default: return ErrRingIngnore;//ignore mensagens nao programadas
 		}
-		TOKEN=type;//allows external code to see what was the type of token
 		if(id==myId)return ErrRingIngnore;//nao renvia mensagens prorpias
 		return RingMsgPidgeon(RingMsgBuffer);
 	}else{
