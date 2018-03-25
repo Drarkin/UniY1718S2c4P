@@ -92,16 +92,10 @@ int Ring(int fd2read,struct sockaddr_in *addr,int myId,int StartServer){
 	}
 		//read message from unknown
 	switch (RingInfo.type){
-		case uno:
-			if (StartServer)return CreateRing(fd2read,addr,myId);;
-			break;
-		case halfway:
-			return OuroborosTail(fd2read,addr,myId);
-			break;
+		case uno:if (StartServer)return CreateRing(fd2read,addr,myId);break;
+		case halfway:return OuroborosTail(fd2read,addr,myId);break;
 		case duo:
-		case mul:
-			if (StartServer)return NewServer(fd2read,myId);
-			break;
+		case mul:if (StartServer)return NewServer(fd2read,myId);break;
 		default:
 			#ifdef debug
 				fprintf(stderr,"[CRITICAL-Ring] OUTSTATE!\n");
@@ -605,23 +599,19 @@ int RingToken(int myId){
 	char msgBuffer[RingMsgSize_TOKEN];//worst msg size plus 1
 	char ip[MYIPSIZE]="---.---.---.---";
 	char type;
-	int ip1,ip2,ip3,ip4,tpt;
-	int id,id2;
+	int id;
 	int n;
-	int B_fd=RingInfo.B_fd;//read from previous ringNode
-	int msgSize;
-	struct RingInfoType RingInfoBackup;
 	
 	/*n=sscanf(msgBuffer,"TOKEN %d;%c;%d;%d.%d.%d.%d;%d",&id,&type,&id2,&ip1,&ip2,&ip3,&ip4,&tpt);/**/
 	n=sscanf(RingMsgBuffer,"TOKEN %d;%c",&id,&type);
 	if (2==n){
 		TOKEN=type;//allows external code to see what was the type of token
-		if(id==myId) fprintf(stderr,"[INFO-RingTokenTOKEN] has returned!\n");
+		if(id==myId) fprintf(stderr,"[INFO-RingTokenTOKEN] Token has returned!\n");
 		switch(type){
 			case 'N': if(id!=myId){return InsertNewRingMember(myId);}break;//ingore if msg have server id
 			case 'O':if(id!=myId){return CloseRingAfterMemberLeaves(myId);}break;
-			case 'S':if(id==myId){sprintf(msgBuffer,"TOKEN %d;I\n",myId);return RingMsgPidgeon(msgBuffer);}if(RingNodeBusy()){break;}return ErrRingIngnore;
-			case 'I':RingSetBusy();break;
+			case 'S':if(id==myId){RingSetBusy();sprintf(msgBuffer,"TOKEN %d;I\n",myId);return RingMsgPidgeon(msgBuffer);}if(RingNodeBusy()){break;}return ErrRingIngnore;
+			case 'I':if(id!=myId){RingSetBusy();}break;
 			case 'D':if(myId!=id){TOKEN='d';RingSetIdle();}if (RingNodeBusy()){RingSetIdle();break;}if(myId>id){break;}return ErrRingIngnore;//executa como dito no enunciado
 			case 'T':break;
 			case 'M':break;
