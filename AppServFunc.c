@@ -20,7 +20,7 @@
 	void withdraw_ds(int x){
 		sprintf(myBuffer,"WITHDRAW_DS %i;%i\n",x,id);
 		mysend(udp_fp,SC_addr);
-		myrecv(udp_fp,&SC_addr);//o servidor Central responde! Existe erro
+		myrecv(udp_fp,&SC_addr);//set timmeout
 		AppState.ds=false;
 	}
 	void set_start (int x){
@@ -43,7 +43,7 @@
 	void withdraw_start(int x){
 		sprintf(myBuffer,"WITHDRAW_START %i;%i\n",x,id);
 		mysend(udp_fp,SC_addr);
-		myrecv(udp_fp,&SC_addr);
+		myrecv(udp_fp,&SC_addr);//set timmeout
 		AppState.ss=false;
 	}
 	void get_start(int x){
@@ -98,6 +98,11 @@
 	void myfpClose(){
 		if (udp_fp>=0){ close(udp_fp);udp_fp=-1;}
 		if (tcp_fd>=0){ close(tcp_fd);tcp_fd=-1;}
+		#ifdef AppServRingVar
+		if (RingInfo.A_fd>=0){ close(RingInfo.A_fd);RingInfo.A_fd=-1;}
+		if (RingInfo.B_fd>=0){ close(RingInfo.B_fd);RingInfo.B_fd=-1;}
+		
+		#endif
 		return;
 	}	
 //Start SetUp

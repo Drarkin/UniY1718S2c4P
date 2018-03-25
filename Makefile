@@ -1,11 +1,11 @@
 server:
-	gcc GeralCom.c -o GeralCom.o -c
-	gcc AppServVar.c -o AppServVar.o -c
-	gcc AppServFunc.c -o AppServFunc.o -c
-	gcc AppServSystem.c -o AppServSystem.o -c	
-	gcc AppServ.c -o AppServ.o -c
-	gcc AppServRingVar.c -o AppServRing.o -c
-	gcc -o service AppServ.o AppServSystem.o AppServFunc.o AppServVar.o GeralCom.o AppServRing.o
+	gcc GeralCom.c -o GeralCom.o -c -g
+	gcc AppServVar.c -o AppServVar.o -c -g
+	gcc AppServFunc.c -o AppServFunc.o -c -g
+	gcc AppServSystem.c -o AppServSystem.o -c -g
+	gcc AppServ.c -o AppServ.o -c -g
+	gcc AppServRingVar.c -o AppServRing.o -c -g
+	gcc -o service AppServ.o AppServSystem.o AppServFunc.o AppServVar.o GeralCom.o AppServRing.o -g
 	
 client:
 	gcc GeralCom.c -o GeralCom.o -c

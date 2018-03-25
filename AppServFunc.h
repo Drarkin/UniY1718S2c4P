@@ -11,6 +11,7 @@
 
 #include "GeralCom.h"
 #include "AppServVar.h"
+#include "AppServRingVar.h"
 
 	void myfpClose();
 //CentralServer Comamnds
