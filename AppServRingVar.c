@@ -81,11 +81,6 @@ int RingMsgPidgeon(char *msg){
 }
 /**MAnage rings members */
 int Ring(int fd2read,struct sockaddr_in *addr,int myId,int StartServer){
-	/*
-		-1 ignore
-		-2 close B
-		-3 close A
-	*/
 	if(fd2read==RingInfo.B_fd){
 		//read msg fromring member
 		return RingToken(myId);
@@ -174,7 +169,12 @@ int CloseRingAfterMemberLeaves(int myId){
 	int id,type,id2,ip1,ip2,ip3,ip4,tpt;
 	char ip[MYIPSIZE]="---.---.---.---";
 	char *msgBuffer=RingMsgBuffer;//change msgBuffer to RingMSgBuffer
+	n=RingMsgPidgeon(msgBuffer);//resends message for the next node
+	if (n<0){return n;}//fail to send message for the next node
 	n=sscanf(RingMsgBuffer,"TOKEN %d;%c;%d;%d.%d.%d.%d;%d",&id,&type,&id2,&ip1,&ip2,&ip3,&ip4,&tpt);
+	#ifdef debug
+		fprintf(stderr,"[ERROR-InsertNewRingMember] Member is leaving(%c)\n\t LeavingMemberOfId:%d\n\t Sucessor:%d;%d.%d.%d.%d:%d",type,id,id2,ip1,ip2,ip3,ip4,tpt);
+	#endif
 	if (n!=8) return ErrRingIngnore;
 	if(ip1<=255 && ip2<=255 && ip3<=255 && ip4<=255){
 		if (id==RingInfo.A_Id &&id==RingInfo.B_Id){
@@ -182,6 +182,7 @@ int CloseRingAfterMemberLeaves(int myId){
 				close(RingInfo.B_fd);
 				close(RingInfo.A_fd);
 				CleanRing ();
+				RingInfo.type=uno;
 				return ErrRingIngnore;
 			}
 		if(id==RingInfo.A_Id){//my sucessor is leaving
@@ -196,9 +197,6 @@ int CloseRingAfterMemberLeaves(int myId){
 				#ifdef debug
 					fprintf(stderr,"[INFO-RingToken] Success to conect to Successor server\n",RingInfo.A_IP,RingInfo.A_Port,msgBuffer);
 				#endif
-				if (ErrRingA==RingMsgPidgeon(msgBuffer))
-					return ErrRingNoRing;//should be critical no node before
-				RingInfo.type=uno;
 				return RingInfo.A_fd;
 			}
 		}else if(id==RingInfo.B_Id){// previous node is leaving
@@ -206,19 +204,14 @@ int CloseRingAfterMemberLeaves(int myId){
 			RingInfo.type=halfway;
 			return RingInfo.A_fd;
 			
-		}else{
-			//Continue to pass the msg
-			return RingMsgPidgeon(msgBuffer);
-		}	
+		}else return ErrRingIngnore;
 	}else{
 		//Fails match
 		#ifdef debug
 			fprintf(stderr,"[ERROR-InsertNewRingMember] FAILED! Invalid IPv4: %d.%d.%d.%d\n",ip1,ip2,ip3,ip4);
 		#endif
-		return -1;
+		return ErrRingIngnore;
 	}	
-		
-	
 }
  int OuroborosHead(int myId){
 	 //return positive in case of success
@@ -597,21 +590,18 @@ char* RingReadMSG(){
 int RingToken(int myId){
 	//add B data to RingInfo
 	char msgBuffer[RingMsgSize_TOKEN];//worst msg size plus 1
-	char ip[MYIPSIZE]="---.---.---.---";
 	char type;
 	int id;
 	int n;
-	
-	/*n=sscanf(msgBuffer,"TOKEN %d;%c;%d;%d.%d.%d.%d;%d",&id,&type,&id2,&ip1,&ip2,&ip3,&ip4,&tpt);/**/
 	n=sscanf(RingMsgBuffer,"TOKEN %d;%c",&id,&type);
 	if (2==n){
 		TOKEN=type;//allows external code to see what was the type of token
 		if(id==myId) fprintf(stderr,"[INFO-RingTokenTOKEN] Token has returned!\n");
 		switch(type){
 			case 'N': if(id!=myId){return InsertNewRingMember(myId);}break;//ingore if msg have server id
-			case 'O':if(id!=myId){return CloseRingAfterMemberLeaves(myId);}break;
+			case 'O':if(id!=myId){return CloseRingAfterMemberLeaves(myId);}else{close(RingInfo.A_fd);close(RingInfo.B_fd);CleanRing ();}return ErrRingIngnore;
 			case 'S':if(id==myId){RingSetBusy();sprintf(msgBuffer,"TOKEN %d;I\n",myId);return RingMsgPidgeon(msgBuffer);}if(RingNodeBusy()){break;}return ErrRingIngnore;
-			case 'I':if(id!=myId){RingSetBusy();}break;
+			case 'I':if(id!=myId){RingSetBusy();}if(RingNodeBusy()){break;}return ErrRingIngnore;//sets ring busy flag, case node is idle don't propagate msg
 			case 'D':if(myId!=id){TOKEN='d';RingSetIdle();}if (RingNodeBusy()){RingSetIdle();break;}if(myId>id){break;}return ErrRingIngnore;//executa como dito no enunciado
 			case 'T':break;
 			case 'M':break;

@@ -121,12 +121,9 @@
 			}
 			if (AppState.ring){
 				bufferclean();//Reset burffer data
-				sprintf(myBuffer,"TOKEN %d;O;%d;%s%d;\n\0",id,RingInfo.A_Id,RingInfo.A_IP,RingInfo.A_Port);//prevent buffer overflow
+				sprintf(myBuffer,"TOKEN %d;O;%d;%s;%d\n\0",id,RingInfo.A_Id,RingInfo.A_IP,RingInfo.A_Port);//prevent buffer overflow
 				RingMsgPidgeon(myBuffer);
 				//clean state to ini
-				close(RingInfo.A_fd);RingInfo.A_fd=-1;
-				close(RingInfo.B_fd);RingInfo.B_fd=-1;
-				CleanRing ();
 			}
 			AppReset();
 			#endif
