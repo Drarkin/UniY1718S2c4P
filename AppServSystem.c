@@ -18,6 +18,7 @@
 				bufferclean();//Reset burffer data
 				sprintf(myBuffer,"TOKEN %d;S\n\0",id);//prevent buffer overflow
 				RingMsgPidgeon(myBuffer);
+				RingSetNodeBusy();
 			}else{
 				//alone
 				printf(">>Busy on client (%s:%d)\n",inet_ntoa(C_addr.sin_addr),C_addr.sin_port);
@@ -46,8 +47,8 @@
 				//in ring infor disponibility
 				RingSetNodeIdle();
 				bufferclean();//Reset burffer data
-				sprintf(myBuffer,"TOKEN %d;D\n\0",id);//prevent buffer overflow
-				RingMsgPidgeon(myBuffer);
+				if(RingBusy()){sprintf(myBuffer,"TOKEN %d;D\n\0",id);RingMsgPidgeon(myBuffer);}
+				return ready;
 			}else{
 				//alone
 				printf(">>Free client (%s:%d)\n",inet_ntoa(C_addr.sin_addr),C_addr.sin_port);
@@ -210,7 +211,6 @@
 					#ifdef debug
 						fprintf(stderr,"[INFO-appRun] afd negative (%d)! %s\n",afd,strerror(errnum));
 					#endif
-
 				}else{
 					intaux=Ring(afd,&tpc_in_Addr,id,AppState.ss);//id means id of this server
 					#ifdef debug
@@ -246,11 +246,10 @@
 				}else
 					intaux=Ring(afd,&tpc_in_Addr,id,AppState.ss);//id means id of this server
 				if (TOKEN=='S' && AppState.ds==false && AppState.state==ready){
-					fprintf(stderr,"REMOVER!!! fazer set ds\n");
-					set_ds(ServX);
-					AppState.state=s_ds;
+					set_ds(ServX);AppState.state=s_ds;
+				}else if(TOKEN=='D'){
+					set_ds(ServX);AppState.state=s_ds;
 				}
-
 				#ifdef debug
 					fprintf(stderr,"[INFO-appRun] Token=%c Ring=%d %d %d \n",TOKEN,intaux,AppState.ds,false);
 				#endif

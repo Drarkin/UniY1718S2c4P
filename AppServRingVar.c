@@ -618,17 +618,11 @@ int RingToken(int myId){
 		TOKEN=type;//allows external code to see what was the type of token
 		if(id==myId) fprintf(stderr,"[INFO-RingTokenTOKEN] has returned!\n");
 		switch(type){
-			case 'N': if(id!=myId)//ingore if msg have server id
-					return InsertNewRingMember(myId);
-				break;
-			case 'O':if(id!=myId)
-					return CloseRingAfterMemberLeaves(myId);
-				break;
-			case 'S':if(id==myId && Snode==busy){sprintf(msgBuffer,"TOKEN %d;I\n",myId);return RingMsgPidgeon(msgBuffer);}
-				return ErrRingIngnore;
-				break;
+			case 'N': if(id!=myId){return InsertNewRingMember(myId);}break;//ingore if msg have server id
+			case 'O':if(id!=myId){return CloseRingAfterMemberLeaves(myId);}break;
+			case 'S':if(id==myId){sprintf(msgBuffer,"TOKEN %d;I\n",myId);return RingMsgPidgeon(msgBuffer);}if(RingNodeBusy()){break;}return ErrRingIngnore;
 			case 'I':RingSetBusy();break;
-			case 'D':if (RingNodeBusy()){RingSetIdle();break;}else if(myId>id){TOKEN='s';break;}else return ErrRingIngnore;//executa como dito no enunciado
+			case 'D':if(myId!=id){TOKEN='d';RingSetIdle();}if (RingNodeBusy()){RingSetIdle();break;}if(myId>id){break;}return ErrRingIngnore;//executa como dito no enunciado
 			case 'T':break;
 			case 'M':break;
 			default: return ErrRingIngnore;//ignore mensagens nao programadas
