@@ -227,7 +227,6 @@
 						#endif
 						//anel criado
 						AppState.ring=1;
-						AppState.state=ready;
 					}
 				}
 			}
