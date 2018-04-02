@@ -110,7 +110,7 @@
 			if (AppState.ss){
 				withdraw_start(ServX);
 				bufferclean();//Reset burffer data
-				sprintf(myBuffer,"NEW_START\n\0");//prevent buffer overflow
+				sprintf(myBuffer,"NEW_START\n");//prevent buffer overflow
 				RingMsgPidgeon(myBuffer);
 			}
 			if (AppState.ds){
@@ -236,10 +236,8 @@
 				#endif
 				intaux=0;//ini
 				RingReadMSG();
-				if(myScmp("NEW_START\n")){
-					set_start(ServX);
-				}else
-					intaux=Ring(afd,&tpc_in_Addr,id,AppState.ss);//id means id of this server
+				if(myScmp2("NEW_START\n",RingMsgBuffer)){set_start(ServX);}
+				else intaux=Ring(afd,&tpc_in_Addr,id,AppState.ss);//id means id of this server
 				if (TOKEN=='S' && AppState.ds==false && AppState.state==ready){set_ds(ServX);AppState.state=s_ds;}
 				else if(TOKEN=='D'){set_ds(ServX);AppState.state=s_ds;}
 				else if(TOKEN=='O'){AppReset();/*finish leave*/}

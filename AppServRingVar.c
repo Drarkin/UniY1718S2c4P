@@ -63,7 +63,7 @@ int RingMsgPidgeon(char *msg){
 	#ifdef debug
 	fprintf(stderr,"[INFO-Pidgeon] Sent %d Bytes{%d@%s:%d}: ",strlen(msg),RingInfo.A_Id,RingInfo.A_IP,RingInfo.A_Port);
 	#endif
-	size=strlen(msg)+1;
+	size=strlen(msg);
 	msgSize=write(RingInfo.A_fd,msg,size);
 	if(msgSize==size){
 		//Success

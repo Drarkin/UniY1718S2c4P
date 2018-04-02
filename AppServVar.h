@@ -9,6 +9,7 @@
 #define GetMState AppMainStateName[AppState.state]
 #define max(A,B) ((A)>=(B)?(A):(B))
 #define myScmp(A) (strncmp(myBuffer,A,strlen(A))==0)
+#define myScmp2(A,B) (strncmp(B,A,strlen(A))==0)
 //configuration of App
 
 //Geral Default Values
