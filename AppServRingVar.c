@@ -540,7 +540,7 @@ int RingToken(int myId){
 		switch(type){
 			case 'N': if(id!=myId){return InsertNewRingMember(myId);}break;//ingore if msg have server id
 			case 'O':if(id!=myId){TOKEN='o';return CloseRingAfterMemberLeaves(myId);}else{close(RingInfo.A_fd);close(RingInfo.B_fd);CleanRing ();}return ErrRingIngnore;
-			case 'S':if(id==myId){RingSetBusy();sprintf(msgBuffer,"TOKEN %d;I\n",myId);return RingMsgPidgeon(msgBuffer);}if(RingNodeBusy()){break;}sprintf(RingMsgBuffer,"TOKEN %d;T\n",id);RingMsgPidgeon(msgBuffer);return ErrRingIngnore;
+			case 'S':if(id==myId){RingSetBusy();sprintf(msgBuffer,"TOKEN %d;I\n",myId);return RingMsgPidgeon(msgBuffer);}if(RingNodeBusy()){break;}sprintf(msgBuffer,"TOKEN %d;T\n",id);RingMsgPidgeon(msgBuffer);return ErrRingIngnore;
 			case 'I':if(id!=myId){RingSetBusy();}if(RingNodeBusy()){break;}return ErrRingIngnore;//sets ring busy flag, case node is idle don't propagate msg
 			case 'D':if(myId!=id){TOKEN='d';RingSetIdle();}if (RingNodeBusy()){RingSetIdle();break;}if(myId>id){break;}return ErrRingIngnore;//executa como dito no enunciado
 			case 'T':break;
