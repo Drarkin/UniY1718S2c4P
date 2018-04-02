@@ -77,8 +77,8 @@
 		intaux=read(STDIN,myBuffer,buffersize-1);//prevent buffer overflow
 		/*prevent loopbug*/
 		if (intaux<=0) {getchar();return 0;}
-		if (myScmp("q")||myScmp("quit")||myScmp("exit")){
-			if myScmp("exit")
+		if (myScmp("q\n")||myScmp("quit\n")||myScmp("exit\n")){
+			if myScmp("exit\n")
 				if (!(AppState.ds || AppState.ss || AppState.ring))return 1;
 				else fprintf(stderr,"still conectect!\n");
 			if(AppState.ring==0){
@@ -94,7 +94,7 @@
 				AppReset();
 			}else fprintf(stderr,"[WARNING-userIns] LEave the ring first!\n");
 
-		}else if(myScmp("join")){
+		}else if(myScmp("join ")){
 			if (AppState.state==nready){
 				//entrar no anel do serviço x
 				// por omissao entrar no anel disponicel
@@ -104,7 +104,7 @@
 			}else{
 				fprintf(stderr,">>Can't Join Now! Already joined ServX:%d\n`\n\tUse \"Force w_ss\" to frocefull remove the service\n",ServX);
 			}
-		}else if(myScmp("l")||myScmp("leave")){
+		}else if(myScmp("l\n")||myScmp("leave\n")){
 			#ifdef AppServRingVar
 			fprintf(stderr,">START LEAVE!\n");
 			if (AppState.ss){
@@ -116,7 +116,7 @@
 			if (AppState.ds){
 				withdraw_ds(ServX);
 				bufferclean();//Reset burffer data
-				sprintf(myBuffer,"TOKEN %d;I\n\0",id);//prevent buffer overflow
+				sprintf(myBuffer,"TOKEN %d;S\n\0",id);//prevent buffer overflow
 				RingMsgPidgeon(myBuffer);
 			}
 			if (AppState.ring){
@@ -125,11 +125,10 @@
 				RingMsgPidgeon(myBuffer);
 				//clean state to ini
 			}
-			AppReset();
 			#endif
 
 
-		}else if(myScmp("show_state")){
+		}else if(myScmp("show_state\n")){
 			printf(">ServerState:\n\tmyID:%i;\n\tServX:%i;\n\tstartS: %d@%s:%d\n\t%s (ss: %i  /  ds: %i / ring: %i)\n",id,ServX,
                    Oid,Oip,Otpt,
                    GetMState,AppState.ss,AppState.ds,AppState.ring);
@@ -138,11 +137,11 @@
 			printf(">RingInfo-NodeB: (fd=%d) %d@%s:%d\n",RingInfo.B_fd,RingInfo.B_Id,RingInfo.B_IP,RingInfo.B_Port);
 		#endif
 			//print state
-		}else if myScmp("Force w_ss"){
+		}else if myScmp("Force w_ss\n"){
 			fprintf(stderr,">>Force W_SS!\n");
 			withdraw_start(ServX);
 			ServX=-1;
-		}else if myScmp("teste"){
+		}else if myScmp("test\n"){
 			#ifdef AppServRingVar
 				bufferclean();//Reset burffer data
 				sprintf(myBuffer,"TOKEN %d;M\n\0",id);//prevent buffer overflow
@@ -241,11 +240,9 @@
 					set_start(ServX);
 				}else
 					intaux=Ring(afd,&tpc_in_Addr,id,AppState.ss);//id means id of this server
-				if (TOKEN=='S' && AppState.ds==false && AppState.state==ready){
-					set_ds(ServX);AppState.state=s_ds;
-				}else if(TOKEN=='D'){
-					set_ds(ServX);AppState.state=s_ds;
-				}
+				if (TOKEN=='S' && AppState.ds==false && AppState.state==ready){set_ds(ServX);AppState.state=s_ds;}
+				else if(TOKEN=='D'){set_ds(ServX);AppState.state=s_ds;}
+				else if(TOKEN=='O'){AppReset();/*finish leave*/}
 				#ifdef debug
 					fprintf(stderr,"[INFO-appRun] Token=%c Ring=%d %d %d \n",TOKEN,intaux,AppState.ds,false);
 				#endif
@@ -311,6 +308,8 @@
 						if(JoinRing(ServX,id,ip,tpt)>-1){
 							//Success
 							AppState.ring=true;
+							AppState.state=ready;
+							
 						}
 						//fail to joinring
 					}
