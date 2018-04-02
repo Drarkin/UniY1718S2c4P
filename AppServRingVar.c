@@ -421,39 +421,16 @@ int NewServer(int tcp_fdB,int myID){
 				//Warn ring of new member
 				//Start pass token
 				sprintf(msgBuffer,"TOKEN %d;N;%d;%s;%d\n",myID,id,ip,tpt);
-				msgSize=strlen(msgBuffer)+1;
+				msgSize=strlen(msgBuffer);
 				if(msgSize==write(RingInfo.A_fd,msgBuffer,msgSize)){
 					#ifdef debug
 						fprintf(stderr,"[INFO-NewServer] SENT{%d@%s:%d}: %s\n",id,ip,tpt,msgBuffer);
 					#endif
-					//obter confirmaçao do atecedente
-					msgSize=read(RingInfo.B_fd,msgBuffer,RingMsgSize_TOKEN);
-					//Sucessfull Conected
-					if(msgSize>0){
-						#ifdef debug
-							fprintf(stderr,"[INFO-NewServer] Recv: %s\n",msgBuffer);
-						#endif
-						sscanf(msgBuffer,"TOKEN %d;K;%d;%d.%d.%d.%d;%d\n\0",&BId,&Nid,&Nip1,&Nip2,&Nip3,&Nip4,&Ntpt);
-						if(Nid==id && Nip1==ip1 && Nip2==ip2 && Nip3==ip3 && Nip4==ip4 && Ntpt==tpt && RingInfo.B_Id==BId){
-							//check that ring formed with the new server
-							close(RingInfo.B_fd);
-							Ring_SetB(ip,id,tpt);
-							RingInfo.B_fd=tcp_fdB;
-						}else{
-						#ifdef debug
-							fprintf(stderr,"[INFO-NewServer] Wrong Data: %d;K;%d;%d.%d.%d.%d;%d\n",BId,Nid,Nip1,Nip2,Nip3,Nip4,Ntpt);
-							fprintf(stderr,"[INFO-NewServer] expected  : %d;K;%d;%d.%d.%d.%d;%d\n",RingInfo.B_Id,id,ip1,ip2,ip3,ip4,tpt);
-						#endif
-						return -1;
-						}
-					}else{
-						//fail to recive
-						#ifdef debug
-							fprintf(stderr,"[INFO-NewServer] FAILED to Recv\n");
-						#endif
-						return -1;
-					}
 					//SUCCESS
+					//befcause of specifications this will be allways a success
+					close(RingInfo.B_fd);
+					Ring_SetB(ip,id,tpt);
+					RingInfo.B_fd=tcp_fdB;
 					return tcp_fdB;//returns The fd of the new conection
 				}else{
 					#ifdef debug
@@ -498,7 +475,7 @@ int InsertNewRingMember( int myId){
 	if (n!=8) return ErrRingIngnore;
 	if(ip1<=255 && ip2<=255 && ip3<=255 && ip4<=255){
 		if(id==RingInfo.A_Id){
-			sprintf(ip,"%d.%d.%d.%d\0",ip1,ip2,ip3,ip4);
+			sprintf(ip,"%d.%d.%d.%d",ip1,ip2,ip3,ip4);
 			RingInfoBackup=RingInfo;
 			Ring_SetA(ip,id2,tpt);
 			if(0>OuroborosHead(myId)){
@@ -507,49 +484,12 @@ int InsertNewRingMember( int myId){
 				#ifdef debug
 					fprintf(stderr,"[INFO-InsertNewRingMember] Fail to conect to new server\n",RingInfo.A_IP,RingInfo.A_Port,msgBuffer);
 				#endif
-				/*Avisar SERVIDOR START QUE FALHOU*/
-				/** Type F warns that the head of ring (server before StartServer) failed to connect to the new server, aborts new server */
-				/***TOKEN myID;F;id2;pip2;tpt2\n**/
-				sprintf(msgBuffer,"TOKEN %d;F;%d;%d.%d.%d.%d;%d\n\0",myId,id2,ip1,ip2,ip3,ip4,tpt);
-				msgSize=strlen(msgBuffer)+1;
-				if(msgSize==write(RingInfo.A_fd,msgBuffer,msgSize)){
-					//Success
-					#ifdef debug
-						fprintf(stderr,"[INFO-InsertNewRingMember] Sent{%s:%d}: %s\n",RingInfo.A_IP,RingInfo.A_Port,msgBuffer);
-					#endif
-				}else{
-					//Failed
-					#ifdef debug
-						fprintf(stderr,"[Critical-InsertNewRingMember] Failed To A_node! exit(0)!\n");
-					#endif
-					#ifdef ExitOnCritic
-						exit(0);
-					#endif
-					return -1;
-				}
 				return 0;
 			}else{
 				//Sucess to connect with new Server
 				#ifdef debug
 					fprintf(stderr,"[INFO-InsertNewRingMember] Success to conect to new server\n",RingInfo.A_IP,RingInfo.A_Port,msgBuffer);
 				#endif
-				/*Avisar SERVIDOR START QUE Success*/
-				/** Type F warns that the head of ring (server before StartServer) failed to connect to the new server, aborts new server */
-				/***TOKEN myID;F;id2;pip2;tpt2\n**/
-				sprintf(msgBuffer,"TOKEN %d;K;%d;%d.%d.%d.%d;%d\n\0",myId,id2,ip1,ip2,ip3,ip4,tpt);
-				msgSize=strlen(msgBuffer)+1;
-				if(msgSize==write(RingInfoBackup.A_fd,msgBuffer,msgSize)){
-					//Success
-					#ifdef debug
-						fprintf(stderr,"[INFO-InsertNewRingMember] Sent{%s:%d}: %s\n",RingInfo.A_IP,RingInfo.A_Port,msgBuffer);
-					#endif
-				}else{
-					//Failed
-					#ifdef debug
-						fprintf(stderr,"[Critical-InsertNewRingMember] Failed To A_node! exit(0)!\n");
-					#endif
-					return -1;
-				}
 				close(RingInfoBackup.A_fd);//close old A_fd connection
 				return RingInfo.A_fd;
 			}
