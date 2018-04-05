@@ -40,4 +40,4 @@ struct sockaddr_in C_addr;
 	char	Oip[IPSIZE];
 	int	Otpt;
 //#endif
-const char *AppMainStateName[]={"nready", "g_s", "g_s_ok", "s_s", "s_s_ok", "s_ds", "s_ds_ok", "joinR", "joinR_ok", "leaveR", "leaveR_ok", "ready", "busy", "w_ds", "w_ds_ok", "w_s", "w_s_ok"};
+const char *AppMainStateName[]={"Off", "g_s", "g_s_ok", "s_s", "s_s_ok", "s_ds", "s_ds_ok", "joinR", "joinR_ok", "leaveR", "leaveR_ok", "ready", "busy", "w_ds", "w_ds_ok", "w_s", "w_s_ok","On"};

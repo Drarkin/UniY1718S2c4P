@@ -44,7 +44,7 @@ extern	struct 	sockaddr_in SC_addr;
 extern	struct 	sockaddr_in ring_addr;//tcp addres to comunivcate with other ring elements
 	//Other ServiceServerInfo
 extern	struct app_service_state {//indicates the system state 
-		enum {nready,g_s,g_s_ok,s_s,s_s_ok,s_ds,s_ds_ok,joinR,joinR_ok,leaveR,leaveR_ok,ready,busy,w_ds,w_ds_ok,w_s,w_s_ok} state; //have func getEnum
+		enum {Off,g_s,g_s_ok,s_s,s_s_ok,s_ds,s_ds_ok,joinR,joinR_ok,leave,leave_ok,ready,busy,w_ds,w_ds_ok,w_s,w_s_ok,ON} state; //have func getEnum
 		enum {false,true} ds,ss,ring;// have func getBool
 	}AppState;
 extern const char *AppMainStateName[];

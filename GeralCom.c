@@ -21,7 +21,7 @@
 	int mysend(int fd, struct sockaddr_in addr){
 		//sned the buffer contents to the addr using fd
 		int n;
-		//bufferclean();
+		bufferclean();
 		myBuffer[buffersize-1]='\0';//marks end of string
 		n=sendto(fd,myBuffer,strlen(myBuffer),0,(struct sockaddr*)&addr,sizeof(addr));
 		if(n==-1)fprintf(stderr,"<<GeralCom>> Failed to send!\n");
