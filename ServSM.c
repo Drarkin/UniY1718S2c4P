@@ -74,39 +74,60 @@ void fdSelector(){
 	}
 	
 	int StateMachine(int fd,int fdType){
+		int OldState=-1;
 		if (fd==SM_TimeOut){
 			//reset to Off StateCode
-		}
+			if (AppState.state!=Off || AppState.state!=On)
+				switch(AppState.state){
+					case g_s_ok:ServX=-1;AppState.state=Off;break;
+					case s_so_ds:ServX=-1;AppState.state=Off;break;
+					case s_so_dso:AppState.state=w_s;break;
+					case s_s_ok:ServX=-1;AppState.state=Off;break;
+					case s_ds_ok:AppState.state=w_s;break;
+					case w_s_ok:AppState.ss=false;ServX=-1;AppState.state=Off;break;
+					case w_ds_ok:AppState.ds=false;ServX=-1;AppState.state=Off;break;
+				}
 		//chnage machine state
 		switch(fdType){
 			case SM_InStd: //LocalUserInput
 				if (SM_LocalUserInput(fd)){return SM_SysOff};
 				break;
-			case SM_InUdp: //UDP MSG 
-				SM_UDP(fd);
-				break;
-			case SM_InTcp:
-				break;
+			case SM_InUdp:SM_UDP(fd);break;//client Only msg
+			case SM_InTcp:SM_NewTCP(fd);break;
 			case SM_InRing:SM_RingB();break;
 			default: break;
 		}
 		//State Machine definition
-		switch(AppState.state){
-			case g_ss:if (get_start()){AppState.state=g_ss_ok}else{AppState.state=Off};break;
-			case g_ss_ok:
-				if (Ans_get_start())
-					if(Oid==0 && Otpt==0 && 0==strcmp(Oip,"0.0.0.0"))
-						if (set_start()){AppState.state=s_ss_ds;break;}
-				ServX=-1;AppState.state=Off;break;
-			case s_ss_ds:if (set_start ()){AppState.state=s_sso_ds;}else{AppState.state=Off};break;
-			case ss_sso_ds:if(Ans_set_start()){set_ds();AppState.state=s_sso_dso;}else{AppState.state=Off}break;
-			case ss_sso_dso:if
-			case s_ss:if (set_start ()){}else{printfAppState.state=Off};break;
-			case s_ss_ok:if (){}else{AppState.state=Off};break;
-			case s_ds:if (){}else{AppState.state=Off};break;
-			case s_ds_ok:if (){}else{AppState.state=Off};break;
-			
-				
+		while (AppState.state!=OldState){
+			OldState=AppState.state;
+			switch(AppState.state){
+				case g_s:if (get_start()){AppState.state=g_s_ok}else{AppState.state=Off};break;
+				case g_s_ok:
+					if (Ans_get_start())
+						if(Oid==0 && Otpt==0 && 0==strcmp(Oip,"0.0.0.0")){
+							if (set_start()){AppState.state=s_s_ds;break;}
+						}else{
+							Ring_SetA(Oip,Oid,Otpt);
+							if(JoinRing(ServX,id,ip,tpt)>-1){
+								AppState.ring=true;//Success
+								AppState.state=On;
+								break;
+							}
+							CleanRing();
+						}
+					ServX=-1;AppState.state=Off;break;
+				case s_s_ds:if (set_start ()){AppState.state=s_so_ds;}else{AppState.state=Off}break;
+				case s_so_ds:if(Ans_set_start()){AppState.ss=true;if(set_ds()){AppState.state=s_so_dso;break;}else{AppState.state=w_s;break}}AppState.state=Off;break;
+				case s_so_dso:if(Ans_set_ds()){AppState.ds=true;AppState.state=On;}else{AppState.state=w_s;}break;
+				case s_s:if (set_start ()){AppState.state=s_s_ok;}else{printfAppState.state=Off};break;
+				case s_s_ok:if (Ans_set_start(){AppState.ss=true;AppState.state=On;}else{AppState.state=Off};break;
+				case s_ds:if (set_ds()){AppState.ds=true;AppState.state=s_ds_ok;}else{AppState.state=Off};break;
+				case s_ds_ok:if (Ans_set_ds()){AppState.state=On;}else{AppState.state=Off};break;
+				case w_s:if(withdraw_start(ServX)){AppState.state=w_s_ok}else{AppState.state=Off;}break;
+				case w_s_ok:if(Ans_withdraw_start()){AppState.ss=false;AppState.state=Off}break;//else{AppState.state=Off;}break;
+				case w_ds:if(withdraw_ds(ServX)){AppState.state=w_ds_ok}else{AppState.state=Off;}break;	
+				case w_ds_ok:if(Ans_withdraw_ds()){AppState.ds=false;AppState.state=Off}break;//else{AppState.state=Off;}break;
+			}
 		}
 		return SM_SysOn;
 	}
@@ -123,14 +144,14 @@ int SM_LocalUserInput(int fd){
 		intaux=read(STDIN,myBuffer,buffersize-1);//prevent buffer overflow
 		/*prevent loopbug*/
 		if (intaux<=0) {getchar();return 0;}
-		if (myScmp("q")||myScmp("quit")||myScmp("exit")){
+		if myScmp("exit")){
 			if (AppState.state==Off) return 1;//close prgm
 		}else if(myScmp("join")){
 			if (AppState.state==Off){
 				//entrar no anel do serviço x
 				// por omissao entrar no anel disponicel
 				ServX=atoi(&myBuffer[4]);
-				AppState.state=g_ss;
+				AppState.state=g_s;
 				fprintf(stdout,">>Join ServX=%d\n",ServX);
 			}else{fprintf(stdout,">>Leave (ServX=%d), before join anohter!\n",ServX);}
 		}else if(myScmp("l")||myScmp("leave")){
@@ -188,7 +209,7 @@ void SM_RingB(){
 		close(RingInfo.A_fd);RingInfo.A_fd=-1;
 	}
 }
-void SM_NewTCP(){
+void SM_NewTCP(int tcp_fd){
 	int intaux;
 	struct sockaddr_in tpc_in_Addr;
 	//NEW TCP connection
@@ -226,6 +247,55 @@ void SM_NewTCP(){
 			AppState.state=On;
 		}
 	}
+}
+
+void SM_UDP(){
+		if (AppState.state!=On) return;//only On state recives clients requests
+		if (-1==myrecv(udp_fp,NULL)){
+			return;//do nothing
+		}
+		if myScmp("MY_SERVICE ON\n"){
+			//need to get it better organized
+			C_addr=LastInAddr;//saves client addr
+			if(-1==mySend("YOUR_SERVICE ON\n",udp_fp,C_addr)){
+				return;//do nothing
+			}
+			if (AppState.ring){
+				//in ring pass to next ds
+				RingSetNodeBusy();
+				withdraw_ds(ServX);
+				bufferclean();//Reset burffer data
+				sprintf(myBuffer,"TOKEN %d;S\n\0",id);//prevent buffer overflow
+				RingMsgPidgeon(myBuffer);
+				RingSetNodeBusy();
+			}else{
+				//alone
+				printf(">>Busy on client (%s:%d)\n",inet_ntoa(C_addr.sin_addr),C_addr.sin_port);
+				withdraw_ds(ServX);
+			}
+			return busy;
+		}
+		if myScmp("MY_SERVICE OFF\n"){
+			//need to get it better organized
+			if(-1==mySend("YOUR_SERVICE OFF\n",udp_fp,C_addr)){
+				//fail to send
+				return AppState.state;
+			}
+			if (AppState.ring){
+				//in ring infor disponibility
+				RingSetNodeIdle();
+				bufferclean();//Reset burffer data
+				if(RingBusy()){sprintf(myBuffer,"TOKEN %d;D\n\0",id);RingMsgPidgeon(myBuffer);}
+				return ready;
+			}else{
+				//alone
+				printf(">>Free client (%s:%d)\n",inet_ntoa(C_addr.sin_addr),C_addr.sin_port);
+				set_ds(ServX);
+				return s_ds;
+			fprintf(stderr,">>Wrong MSG for BusyState!\n");
+			return busy;
+			}
+		}
 }
 /*******************************/
 /**** StatesInstructions    ****/
