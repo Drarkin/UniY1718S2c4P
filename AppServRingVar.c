@@ -19,6 +19,7 @@ void CleanRing (){
 	return;
 }
 /**setting state of node/ring*/
+ int RingOn(){if (RingInfoType.type>=halfway)return 0;return 1;}
  int RingBusy(){return Sring;}
  int RingNodeBusy(){return Snode;}
 void RingSetNodeBusy(){ Snode=busy;}

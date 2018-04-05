@@ -30,7 +30,7 @@ extern const char *GetTypeVectorName[];
 extern char RingMsgBuffer[RingMsgSize_MAX];
 extern char TOKEN;
 extern struct RingInfoType{	
-	enum{uno,duo,mul,halfway} type;//diz o numero de membros do anel. half means that the ring is passing from uno to duo
+	enum{uno,halfway,duo,mul} type;//diz o numero de membros do anel. half means that the ring is passing from uno to duo
 	int B_fd;
 	struct sockaddr_in B_addr;
 	char B_IP[MYIPSIZE];
@@ -57,6 +57,7 @@ extern struct RingInfoType{
 		   */
 
 //setting state of node/ring
+/*<->*/ int RingOn();
 /*<->*/ int RingBusy();
 /*<->*/ int RingNodeBusy();
 /*<->*/void RingSetNodeIdle();

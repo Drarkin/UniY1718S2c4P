@@ -93,8 +93,15 @@ void fdSelector(){
 		//State Machine definition
 		switch(AppState.state){
 			case g_ss:if (get_start()){AppState.state=g_ss_ok}else{AppState.state=Off};break;
-			case g_ss_ok:if (ans_get_start()){}else{AppState.state=Off};break;
-			case s_ss:if (){}else{AppState.state=Off};break;
+			case g_ss_ok:
+				if (Ans_get_start())
+					if(Oid==0 && Otpt==0 && 0==strcmp(Oip,"0.0.0.0"))
+						if (set_start()){AppState.state=s_ss_ds;break;}
+				ServX=-1;AppState.state=Off;break;
+			case s_ss_ds:if (set_start ()){AppState.state=s_sso_ds;}else{AppState.state=Off};break;
+			case ss_sso_ds:if(Ans_set_start()){set_ds();AppState.state=s_sso_dso;}else{AppState.state=Off}break;
+			case ss_sso_dso:if
+			case s_ss:if (set_start ()){}else{printfAppState.state=Off};break;
 			case s_ss_ok:if (){}else{AppState.state=Off};break;
 			case s_ds:if (){}else{AppState.state=Off};break;
 			case s_ds_ok:if (){}else{AppState.state=Off};break;
@@ -105,7 +112,10 @@ void fdSelector(){
 	}
 	
 
-	
+
+/*******************************/
+/**** PrgmInputs            ****/
+/*******************************/	
 int SM_LocalUserInput(int fd){
 	//reads user input from stdin and calls the correct function to execut user command
 		int intaux;
@@ -142,7 +152,6 @@ int SM_LocalUserInput(int fd){
 		fflush(stdout);
 		return 0;
 }
-
 void SM_RingB(){
 	int intaux;
 	struct sockaddr_in tpc_in_Addr;/*needed?*/
@@ -218,3 +227,6 @@ void SM_NewTCP(){
 		}
 	}
 }
+/*******************************/
+/**** StatesInstructions    ****/
+/*******************************/
