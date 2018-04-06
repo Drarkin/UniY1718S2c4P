@@ -1,3 +1,8 @@
+all:
+	make server -B
+	make client -B
+	make clean
+
 server:
 	gcc GeralCom.c -o GeralCom.o -c -g
 	gcc AppServVar.c -o AppServVar.o -c -g
